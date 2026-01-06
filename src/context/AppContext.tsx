@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import { db } from '../lib/firebase';
 import { collection, onSnapshot, updateDoc, deleteDoc, doc, query, orderBy, limit, setDoc } from 'firebase/firestore';
+import { useAuth } from './AuthContext'; // CRITICAL: Import to wait for auth
 
 
 // ============================================
