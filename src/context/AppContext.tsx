@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import { db } from '../lib/firebase';
-import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, orderBy, limit } from 'firebase/firestore';
+import { collection, onSnapshot, updateDoc, deleteDoc, doc, query, orderBy, limit, setDoc } from 'firebase/firestore';
 
 
 // ============================================
@@ -280,102 +280,136 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }, []);
 
     // ============================================
-    // CRUD OPERATIONS - MUSICIANS
+    // CRUD OPERATIONS - MUSICIANS (Optimistic Updates)
     // ============================================
 
     const addMusician = async (musician: Omit<Musician, 'id' | 'createdAt' | 'updatedAt'>) => {
         const now = new Date().toISOString();
-        await addDoc(collection(db, 'musicians'), {
+        // 1. Generate ID locally
+        const newRef = doc(collection(db, 'musicians'));
+        const newMusician = {
+            id: newRef.id,
             ...musician,
             createdAt: now,
             updatedAt: now
-        });
+        } as Musician;
+
+        // 2. Optimistic Update
+        setMusicians(prev => [...prev, newMusician]);
+
+        // 3. Persist to DB
+        await setDoc(newRef, newMusician);
     };
 
     const updateMusician = async (id: string, data: Partial<Musician>) => {
         const now = new Date().toISOString();
-        await updateDoc(doc(db, 'musicians', id), {
-            ...data,
-            updatedAt: now
-        });
+        const updates = { ...data, updatedAt: now };
+
+        // 1. Optimistic Update
+        setMusicians(prev => prev.map(m => m.id === id ? { ...m, ...updates } : m));
+
+        // 2. Persist to DB
+        await updateDoc(doc(db, 'musicians', id), updates);
     };
 
     const deleteMusician = async (id: string) => {
+        // 1. Optimistic Update
+        setMusicians(prev => prev.filter(m => m.id !== id));
+
+        // 2. Persist to DB
         await deleteDoc(doc(db, 'musicians', id));
     };
 
     // ============================================
-    // CRUD OPERATIONS - EVENTS
+    // CRUD OPERATIONS - EVENTS (Optimistic Updates)
     // ============================================
 
     const addEvent = async (event: Omit<Event, 'id' | 'createdAt' | 'updatedAt'>) => {
         const now = new Date().toISOString();
-        await addDoc(collection(db, 'events'), {
+        const newRef = doc(collection(db, 'events'));
+        const newEvent = {
+            id: newRef.id,
             ...event,
             createdAt: now,
             updatedAt: now
-        });
+        } as Event;
+
+        setEvents(prev => [newEvent, ...prev].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+        await setDoc(newRef, newEvent);
     };
 
     const updateEvent = async (id: string, data: Partial<Event>) => {
         const now = new Date().toISOString();
-        await updateDoc(doc(db, 'events', id), {
-            ...data,
-            updatedAt: now
-        });
+        const updates = { ...data, updatedAt: now };
+
+        setEvents(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
+        await updateDoc(doc(db, 'events', id), updates);
     };
 
     const deleteEvent = async (id: string) => {
+        setEvents(prev => prev.filter(e => e.id !== id));
         await deleteDoc(doc(db, 'events', id));
     };
 
     // ============================================
-    // CRUD OPERATIONS - PAYMENTS
+    // CRUD OPERATIONS - PAYMENTS (Optimistic Updates)
     // ============================================
 
     const addPayment = async (payment: Omit<Payment, 'id' | 'createdAt' | 'updatedAt'>) => {
         const now = new Date().toISOString();
-        await addDoc(collection(db, 'payments'), {
+        const newRef = doc(collection(db, 'payments'));
+        const newPayment = {
+            id: newRef.id,
             ...payment,
             createdAt: now,
             updatedAt: now
-        });
+        } as Payment;
+
+        setPayments(prev => [newPayment, ...prev]);
+        await setDoc(newRef, newPayment);
     };
 
     const updatePayment = async (id: string, data: Partial<Payment>) => {
         const now = new Date().toISOString();
-        await updateDoc(doc(db, 'payments', id), {
-            ...data,
-            updatedAt: now
-        });
+        const updates = { ...data, updatedAt: now };
+
+        setPayments(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
+        await updateDoc(doc(db, 'payments', id), updates);
     };
 
     const deletePayment = async (id: string) => {
+        setPayments(prev => prev.filter(p => p.id !== id));
         await deleteDoc(doc(db, 'payments', id));
     };
 
     // ============================================
-    // CRUD OPERATIONS - EXPENSES
+    // CRUD OPERATIONS - EXPENSES (Optimistic Updates)
     // ============================================
 
     const addExpense = async (expense: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>) => {
         const now = new Date().toISOString();
-        await addDoc(collection(db, 'expenses'), {
+        const newRef = doc(collection(db, 'expenses'));
+        const newExpense = {
+            id: newRef.id,
             ...expense,
             createdAt: now,
             updatedAt: now
-        });
+        } as Expense;
+
+        setExpenses(prev => [newExpense, ...prev]);
+        await setDoc(newRef, newExpense);
     };
 
     const updateExpense = async (id: string, data: Partial<Expense>) => {
         const now = new Date().toISOString();
-        await updateDoc(doc(db, 'expenses', id), {
-            ...data,
-            updatedAt: now
-        });
+        const updates = { ...data, updatedAt: now };
+
+        setExpenses(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
+        await updateDoc(doc(db, 'expenses', id), updates);
     };
 
     const deleteExpense = async (id: string) => {
+        setExpenses(prev => prev.filter(e => e.id !== id));
         await deleteDoc(doc(db, 'expenses', id));
     };
 
