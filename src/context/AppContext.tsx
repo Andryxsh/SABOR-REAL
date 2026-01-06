@@ -182,6 +182,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 // ============================================
 
 export function AppProvider({ children }: { children: ReactNode }) {
+    const { user } = useAuth(); // CRITICAL: Get authenticated user
     const [musicians, setMusicians] = useState<Musician[]>([]);
     const [events, setEvents] = useState<Event[]>([]);
     const [payments, setPayments] = useState<Payment[]>([]);
@@ -189,7 +190,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        console.log('🔥 AppContext: Initializing Firebase listeners...');
+        // CRITICAL: Don't start listeners until user is authenticated
+        if (!user) {
+            console.log('⏸️ Waiting for user authentication...');
+            setLoading(false); // Not loading, just waiting for auth
+            return;
+        }
+
+        console.log('🔥 AppContext: User authenticated, initializing Firebase listeners...');
+        setLoading(true); // Start loading data
 
         // Track initialization status of each subscription
         let loaded = { musicians: false, events: false, payments: false, expenses: false };
@@ -278,7 +287,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             unsubPayments();
             unsubExpenses();
         };
-    }, []);
+    }, [user]); // Re-run when user changes (login/logout)
 
     // ============================================
     // CRUD OPERATIONS - MUSICIANS (Optimistic Updates)
