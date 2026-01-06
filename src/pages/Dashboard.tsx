@@ -199,52 +199,89 @@ export default function Dashboard() {
 
             </div>
 
+            {/* BANNER PARALLAX - Sabor Real - Starts from top behind header */}
+            <div className="relative h-[70vh] overflow-hidden shrink-0 -mt-20 rounded-b-3xl">
+                {/* Parallax Background Image */}
+                <div
+                    className="absolute inset-0"
+                    style={{
+                        backgroundImage: 'url(/assets/SaborRealLargo.webp)',
+                        backgroundAttachment: 'fixed',
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center -90px',
+                        backgroundRepeat: 'no-repeat',
+                    }}
+                >
+                    {/* Dark gradient overlay for text contrast */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/30"></div>
+
+                    {/* Subtle neon glow */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 via-transparent to-purple-500/5 mix-blend-overlay"></div>
+                </div>
+
+                {/* Content over banner */}
+                <div className="relative z-10 h-full flex flex-col items-center justify-end pb-16 px-4">
+                    <img
+                        src="/assets/logo.webp"
+                        alt="Sabor Real Logo"
+                        loading="lazy"
+                        className="w-64 md:w-80 h-auto drop-shadow-[0_0_40px_rgba(250,204,21,0.6)] hover:scale-105 transition-transform duration-300"
+                    />
+                </div>
+            </div>
+
             <div className="flex-1 overflow-y-auto pb-24 px-4 space-y-8 mt-4">
 
-                {/* 1. Stats Cards Grid (Neon Glass) */}
-                <div className="grid grid-cols-2 gap-4">
-                    {/* Balance */}
-                    <div className="bg-black/40 backdrop-blur-md border border-emerald-500/20 rounded-3xl p-5 relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-500/10 rounded-full blur-2xl -mr-10 -mt-10 group-hover:bg-emerald-500/20 transition-colors"></div>
+                {/* 1. Quick Actions (Neon Grid) */}
+                <div>
+                    <h2 className="text-lg font-bold text-white flex items-center gap-2 mb-4 px-1">
+                        <span className="w-1.5 h-6 bg-gradient-to-b from-purple-500 to-yellow-500 rounded-full shadow-[0_0_10px_#a855f7]"></span>
+                        Acciones Rápidas
+                    </h2>
+                    <div className="grid grid-cols-2 gap-4">
+                        <button
+                            onClick={() => navigate('/events', { state: { openModal: true } })}
+                            className="group flex flex-col items-center justify-center p-6 bg-black/40 backdrop-blur-sm rounded-3xl border border-white/10 hover:border-purple-500/50 hover:bg-purple-500/10 transition-all duration-300 relative overflow-hidden">
+                            <div className="absolute inset-0 bg-gradient-to-br from-purple-600/0 to-purple-600/0 group-hover:to-purple-600/20 transition-all duration-500"></div>
 
-                        <div className="flex items-center gap-2 mb-3">
-                            <span className="material-symbols-outlined text-emerald-400 text-2xl drop-shadow-[0_0_5px_rgba(52,211,153,0.5)]">account_balance_wallet</span>
-                        </div>
-                        <div className="text-3xl font-bold text-white tracking-tight">{stats.balance.toFixed(0)} <span className="text-sm font-normal text-white/50">Bs</span></div>
-                        <div className="text-xs text-emerald-400/80 font-medium tracking-wide mt-1 uppercase">Balance General</div>
-                    </div>
+                            <div className="w-14 h-14 rounded-full bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mb-3 group-hover:scale-110 group-hover:shadow-[0_0_15px_rgba(168,85,247,0.4)] transition-all duration-300 relative z-10">
+                                <span className="material-symbols-outlined text-purple-400 text-2xl group-hover:text-white">add</span>
+                            </div>
+                            <span className="text-sm font-bold text-gray-300 group-hover:text-white relative z-10">Nuevo Evento</span>
+                        </button>
 
-                    {/* Músicos */}
-                    <div className="bg-black/40 backdrop-blur-md border border-blue-500/20 rounded-3xl p-5 relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-20 h-20 bg-blue-500/10 rounded-full blur-2xl -mr-10 -mt-10 group-hover:bg-blue-500/20 transition-colors"></div>
+                        <button
+                            onClick={() => navigate('/musicians')}
+                            className="group flex flex-col items-center justify-center p-6 bg-black/40 backdrop-blur-sm rounded-3xl border border-white/10 hover:border-blue-500/50 hover:bg-blue-500/10 transition-all duration-300 relative overflow-hidden">
+                            <div className="absolute inset-0 bg-gradient-to-br from-blue-600/0 to-blue-600/0 group-hover:to-blue-600/20 transition-all duration-500"></div>
 
-                        <div className="flex items-center gap-2 mb-3">
-                            <span className="material-symbols-outlined text-blue-400 text-2xl drop-shadow-[0_0_5px_rgba(96,165,250,0.5)]">group</span>
-                        </div>
-                        <div className="text-3xl font-bold text-white tracking-tight">{stats.activeMusicians}</div>
-                        <div className="text-xs text-blue-400/80 font-medium tracking-wide mt-1 uppercase">Músicos Activos</div>
-                    </div>
+                            <div className="w-14 h-14 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mb-3 group-hover:scale-110 group-hover:shadow-[0_0_15px_rgba(59,130,246,0.4)] transition-all duration-300 relative z-10">
+                                <span className="material-symbols-outlined text-blue-400 text-2xl group-hover:text-white">group_add</span>
+                            </div>
+                            <span className="text-sm font-bold text-gray-300 group-hover:text-white relative z-10">Integrantes</span>
+                        </button>
 
-                    {/* Próximos */}
-                    <div className="bg-black/40 backdrop-blur-md border border-purple-500/20 rounded-3xl p-5 relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-20 h-20 bg-purple-500/10 rounded-full blur-2xl -mr-10 -mt-10 group-hover:bg-purple-500/20 transition-colors"></div>
+                        <button
+                            onClick={() => navigate('/finance', { state: { openPaymentModal: true } })}
+                            className="group flex flex-col items-center justify-center p-6 bg-black/40 backdrop-blur-sm rounded-3xl border border-white/10 hover:border-yellow-500/50 hover:bg-yellow-500/10 transition-all duration-300 relative overflow-hidden">
+                            <div className="absolute inset-0 bg-gradient-to-br from-yellow-600/0 to-yellow-600/0 group-hover:to-yellow-600/20 transition-all duration-500"></div>
 
-                        <div className="flex items-center gap-2 mb-3">
-                            <span className="material-symbols-outlined text-purple-400 text-2xl drop-shadow-[0_0_5px_rgba(168,85,247,0.5)]">event</span>
-                        </div>
-                        <div className="text-3xl font-bold text-white tracking-tight">{stats.upcomingEvents.length}</div>
-                        <div className="text-xs text-purple-400/80 font-medium tracking-wide mt-1 uppercase">Próximos Eventos</div>
-                    </div>
+                            <div className="w-14 h-14 rounded-full bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center mb-3 group-hover:scale-110 group-hover:shadow-[0_0_15px_rgba(234,179,8,0.4)] transition-all duration-300 relative z-10">
+                                <span className="material-symbols-outlined text-yellow-400 text-2xl group-hover:text-white">payments</span>
+                            </div>
+                            <span className="text-sm font-bold text-gray-300 group-hover:text-white relative z-10">Registrar Pago</span>
+                        </button>
 
-                    {/* Por Pagar */}
-                    <div className="bg-black/40 backdrop-blur-md border border-yellow-500/20 rounded-3xl p-5 relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-20 h-20 bg-yellow-500/10 rounded-full blur-2xl -mr-10 -mt-10 group-hover:bg-yellow-500/20 transition-colors"></div>
+                        <button
+                            onClick={() => navigate('/finance', { state: { openExpenseModal: true } })}
+                            className="group flex flex-col items-center justify-center p-6 bg-black/40 backdrop-blur-sm rounded-3xl border border-white/10 hover:border-red-500/50 hover:bg-red-500/10 transition-all duration-300 relative overflow-hidden">
+                            <div className="absolute inset-0 bg-gradient-to-br from-red-600/0 to-red-600/0 group-hover:to-red-600/20 transition-all duration-500"></div>
 
-                        <div className="flex items-center gap-2 mb-3">
-                            <span className="material-symbols-outlined text-yellow-400 text-2xl drop-shadow-[0_0_5px_rgba(250,204,21,0.5)]">payments</span>
-                        </div>
-                        <div className="text-3xl font-bold text-white tracking-tight">{stats.totalPorPagarMusicos} <span className="text-sm font-normal text-white/50">Bs</span></div>
-                        <div className="text-xs text-yellow-400/80 font-medium tracking-wide mt-1 uppercase">Por Pagar</div>
+                            <div className="w-14 h-14 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-3 group-hover:scale-110 group-hover:shadow-[0_0_15px_rgba(239,68,68,0.4)] transition-all duration-300 relative z-10">
+                                <span className="material-symbols-outlined text-red-500 text-2xl group-hover:text-white">receipt_long</span>
+                            </div>
+                            <span className="text-sm font-bold text-gray-300 group-hover:text-white relative z-10">Registrar Gasto</span>
+                        </button>
                     </div>
                 </div>
 
@@ -343,7 +380,60 @@ export default function Dashboard() {
                     )}
                 </div>
 
-                {/* 3. Pagos Pendientes */}
+                {/* 3. Resumen Financiero */}
+                <div>
+                    <h2 className="text-lg font-bold text-white flex items-center gap-2 mb-4 px-1">
+                        <span className="w-1.5 h-6 bg-emerald-500 rounded-full shadow-[0_0_10px_#10b981]"></span>
+                        Resumen Financiero
+                    </h2>
+                    <div className="grid grid-cols-2 gap-4">
+                        {/* Balance */}
+                        <div className="bg-black/40 backdrop-blur-md border border-emerald-500/20 rounded-3xl p-5 relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-500/10 rounded-full blur-2xl -mr-10 -mt-10 group-hover:bg-emerald-500/20 transition-colors"></div>
+
+                            <div className="flex items-center gap-2 mb-3">
+                                <span className="material-symbols-outlined text-emerald-400 text-2xl drop-shadow-[0_0_5px_rgba(52,211,153,0.5)]">account_balance_wallet</span>
+                            </div>
+                            <div className="text-3xl font-bold text-white tracking-tight">{stats.balance.toFixed(0)} <span className="text-sm font-normal text-white/50">Bs</span></div>
+                            <div className="text-xs text-emerald-400/80 font-medium tracking-wide mt-1 uppercase">Balance General</div>
+                        </div>
+
+                        {/* Músicos */}
+                        <div className="bg-black/40 backdrop-blur-md border border-blue-500/20 rounded-3xl p-5 relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 w-20 h-20 bg-blue-500/10 rounded-full blur-2xl -mr-10 -mt-10 group-hover:bg-blue-500/20 transition-colors"></div>
+
+                            <div className="flex items-center gap-2 mb-3">
+                                <span className="material-symbols-outlined text-blue-400 text-2xl drop-shadow-[0_0_5px_rgba(96,165,250,0.5)]">group</span>
+                            </div>
+                            <div className="text-3xl font-bold text-white tracking-tight">{stats.activeMusicians}</div>
+                            <div className="text-xs text-blue-400/80 font-medium tracking-wide mt-1 uppercase">Músicos Activos</div>
+                        </div>
+
+                        {/* Próximos */}
+                        <div className="bg-black/40 backdrop-blur-md border border-purple-500/20 rounded-3xl p-5 relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 w-20 h-20 bg-purple-500/10 rounded-full blur-2xl -mr-10 -mt-10 group-hover:bg-purple-500/20 transition-colors"></div>
+
+                            <div className="flex items-center gap-2 mb-3">
+                                <span className="material-symbols-outlined text-purple-400 text-2xl drop-shadow-[0_0_5px_rgba(168,85,247,0.5)]">event</span>
+                            </div>
+                            <div className="text-3xl font-bold text-white tracking-tight">{stats.upcomingEvents.length}</div>
+                            <div className="text-xs text-purple-400/80 font-medium tracking-wide mt-1 uppercase">Próximos Eventos</div>
+                        </div>
+
+                        {/* Por Pagar */}
+                        <div className="bg-black/40 backdrop-blur-md border border-yellow-500/20 rounded-3xl p-5 relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 w-20 h-20 bg-yellow-500/10 rounded-full blur-2xl -mr-10 -mt-10 group-hover:bg-yellow-500/20 transition-colors"></div>
+
+                            <div className="flex items-center gap-2 mb-3">
+                                <span className="material-symbols-outlined text-yellow-400 text-2xl drop-shadow-[0_0_5px_rgba(250,204,21,0.5)]">payments</span>
+                            </div>
+                            <div className="text-3xl font-bold text-white tracking-tight">{stats.totalPorPagarMusicos} <span className="text-sm font-normal text-white/50">Bs</span></div>
+                            <div className="text-xs text-yellow-400/80 font-medium tracking-wide mt-1 uppercase">Por Pagar</div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 4. Pagos Pendientes (Musician Debts) */}
                 {stats.musiciansWithDebt.length > 0 && (
                     <div>
                         <div className="flex justify-between items-end mb-4 px-1">
@@ -381,59 +471,6 @@ export default function Dashboard() {
                         </div>
                     </div>
                 )}
-
-                {/* 4. Quick Actions (Neon Grid) */}
-                <div>
-                    <h2 className="text-lg font-bold text-white flex items-center gap-2 mb-4 px-1">
-                        <span className="w-1.5 h-6 bg-blue-500 rounded-full shadow-[0_0_10px_#3b82f6]"></span>
-                        Acciones Rápidas
-                    </h2>
-                    <div className="grid grid-cols-2 gap-4">
-                        <button
-                            onClick={() => navigate('/events', { state: { openModal: true } })}
-                            className="group flex flex-col items-center justify-center p-6 bg-black/40 backdrop-blur-sm rounded-3xl border border-white/10 hover:border-purple-500/50 hover:bg-purple-500/10 transition-all duration-300 relative overflow-hidden">
-                            <div className="absolute inset-0 bg-gradient-to-br from-purple-600/0 to-purple-600/0 group-hover:to-purple-600/20 transition-all duration-500"></div>
-
-                            <div className="w-14 h-14 rounded-full bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mb-3 group-hover:scale-110 group-hover:shadow-[0_0_15px_rgba(168,85,247,0.4)] transition-all duration-300 relative z-10">
-                                <span className="material-symbols-outlined text-purple-400 text-2xl group-hover:text-white">add</span>
-                            </div>
-                            <span className="text-sm font-bold text-gray-300 group-hover:text-white relative z-10">Nuevo Evento</span>
-                        </button>
-
-                        <button
-                            onClick={() => navigate('/musicians')}
-                            className="group flex flex-col items-center justify-center p-6 bg-black/40 backdrop-blur-sm rounded-3xl border border-white/10 hover:border-blue-500/50 hover:bg-blue-500/10 transition-all duration-300 relative overflow-hidden">
-                            <div className="absolute inset-0 bg-gradient-to-br from-blue-600/0 to-blue-600/0 group-hover:to-blue-600/20 transition-all duration-500"></div>
-
-                            <div className="w-14 h-14 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mb-3 group-hover:scale-110 group-hover:shadow-[0_0_15px_rgba(59,130,246,0.4)] transition-all duration-300 relative z-10">
-                                <span className="material-symbols-outlined text-blue-400 text-2xl group-hover:text-white">group_add</span>
-                            </div>
-                            <span className="text-sm font-bold text-gray-300 group-hover:text-white relative z-10">Integrantes</span>
-                        </button>
-
-                        <button
-                            onClick={() => navigate('/finance', { state: { openPaymentModal: true } })}
-                            className="group flex flex-col items-center justify-center p-6 bg-black/40 backdrop-blur-sm rounded-3xl border border-white/10 hover:border-yellow-500/50 hover:bg-yellow-500/10 transition-all duration-300 relative overflow-hidden">
-                            <div className="absolute inset-0 bg-gradient-to-br from-yellow-600/0 to-yellow-600/0 group-hover:to-yellow-600/20 transition-all duration-500"></div>
-
-                            <div className="w-14 h-14 rounded-full bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center mb-3 group-hover:scale-110 group-hover:shadow-[0_0_15px_rgba(234,179,8,0.4)] transition-all duration-300 relative z-10">
-                                <span className="material-symbols-outlined text-yellow-400 text-2xl group-hover:text-white">payments</span>
-                            </div>
-                            <span className="text-sm font-bold text-gray-300 group-hover:text-white relative z-10">Registrar Pago</span>
-                        </button>
-
-                        <button
-                            onClick={() => navigate('/finance', { state: { openExpenseModal: true } })}
-                            className="group flex flex-col items-center justify-center p-6 bg-black/40 backdrop-blur-sm rounded-3xl border border-white/10 hover:border-red-500/50 hover:bg-red-500/10 transition-all duration-300 relative overflow-hidden">
-                            <div className="absolute inset-0 bg-gradient-to-br from-red-600/0 to-red-600/0 group-hover:to-red-600/20 transition-all duration-500"></div>
-
-                            <div className="w-14 h-14 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-3 group-hover:scale-110 group-hover:shadow-[0_0_15px_rgba(239,68,68,0.4)] transition-all duration-300 relative z-10">
-                                <span className="material-symbols-outlined text-red-500 text-2xl group-hover:text-white">receipt_long</span>
-                            </div>
-                            <span className="text-sm font-bold text-gray-300 group-hover:text-white relative z-10">Registrar Gasto</span>
-                        </button>
-                    </div>
-                </div>
             </div>
         </>
     );

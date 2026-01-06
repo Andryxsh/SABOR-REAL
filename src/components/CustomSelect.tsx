@@ -54,13 +54,27 @@ export default function CustomSelect({
         }
     };
 
-    // Close on click outside and scroll/resize
+    // Close on click outside and scroll/resize (but NOT scroll inside dropdown)
     useEffect(() => {
         if (!isOpen) return;
 
-        // Handler for closing on scroll/resize
-        const handleScroll = () => setIsOpen(false);
+        const dropdownRef = { current: null as HTMLDivElement | null };
+
+        // Handler for closing on OUTSIDE scroll only
+        const handleScroll = (e: Event) => {
+            // Don't close if scrolling inside the dropdown itself
+            if (dropdownRef.current && dropdownRef.current.contains(e.target as Node)) {
+                return;
+            }
+            setIsOpen(false);
+        };
+
         const handleResize = () => setIsOpen(false);
+
+        // Store dropdown ref after it renders
+        setTimeout(() => {
+            dropdownRef.current = document.querySelector('[data-dropdown-menu="true"]');
+        }, 0);
 
         window.addEventListener('scroll', handleScroll, true); // Capture phase for all scrolls
         window.addEventListener('resize', handleResize);
@@ -114,6 +128,7 @@ export default function CustomSelect({
 
                     {/* Dropdown Menu */}
                     <div
+                        data-dropdown-menu="true"
                         className="fixed z-[9999] bg-[#0a0a0a] border border-white/10 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] overflow-hidden animate-fade-in origin-top ring-1 ring-white/5"
                         style={{
                             top: `${coords.top - window.scrollY}px`, // Fixed uses viewport relative
