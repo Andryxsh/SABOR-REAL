@@ -17,7 +17,9 @@ const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 export const auth = getAuth(app);
 
-// Enable Offline Persistence
+// Enable Offline Persistence - DISABLED to fix initial load issues
+// Offline persistence can cause empty screens on first load due to stale cache
+/*
 enableIndexedDbPersistence(db)
     .catch((err) => {
         if (err.code == 'failed-precondition') {
@@ -26,3 +28,5 @@ enableIndexedDbPersistence(db)
             console.warn('Persistence not supported by browser');
         }
     });
+*/
+console.log('🔥 Firebase initialized (offline persistence disabled for reliable loading)');

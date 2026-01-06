@@ -188,25 +188,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        console.log('🔥 AppContext: Initializing Firebase listeners...');
+
         // Track initialization status of each subscription
         let loaded = { musicians: false, events: false, payments: false, expenses: false };
-        let safetyTimer: ReturnType<typeof setTimeout>;
 
         const checkLoading = () => {
             if (loaded.musicians && loaded.events && loaded.payments && loaded.expenses) {
+                console.log('✅ All collections loaded successfully');
                 setLoading(false);
-                if (safetyTimer) clearTimeout(safetyTimer);
             }
         };
 
-        // SAFETY VALVE: Force loading to false after 7 seconds if firebase hangs
-        safetyTimer = setTimeout(() => {
-            console.warn('⚠️ Force releasing loading state due to timeout.');
-            setLoading(false);
-        }, 7000);
-
         // Helper to handle load/error
         const markLoaded = (key: keyof typeof loaded) => {
+            console.log(`✅ ${key} collection loaded`);
             loaded[key] = true;
             checkLoading();
         };
@@ -215,12 +211,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const unsubMusicians = onSnapshot(
             collection(db, 'musicians'),
             (snapshot) => {
+                console.log(`📥 Musicians snapshot: ${snapshot.docs.length} docs`);
                 const musiciansData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Musician[];
                 setMusicians(musiciansData);
                 markLoaded('musicians');
             },
             (error) => {
-                console.error('Error loading musicians:', error);
+                console.error('❌ Error loading musicians:', error);
                 markLoaded('musicians'); // Mark loaded anyway to unblock UI
             }
         );
@@ -230,12 +227,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const unsubEvents = onSnapshot(
             qEvents,
             (snapshot) => {
+                console.log(`📥 Events snapshot: ${snapshot.docs.length} docs`);
                 const eventsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Event[];
                 setEvents(eventsData);
                 markLoaded('events');
             },
             (error) => {
-                console.error('Error loading events:', error);
+                console.error('❌ Error loading events:', error);
                 markLoaded('events');
             }
         );
@@ -245,12 +243,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const unsubPayments = onSnapshot(
             qPayments,
             (snapshot) => {
+                console.log(`📥 Payments snapshot: ${snapshot.docs.length} docs`);
                 const paymentsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Payment[];
                 setPayments(paymentsData);
                 markLoaded('payments');
             },
             (error) => {
-                console.error('Error loading payments:', error);
+                console.error('❌ Error loading payments:', error);
                 markLoaded('payments');
             }
         );
@@ -260,22 +259,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const unsubExpenses = onSnapshot(
             qExpenses,
             (snapshot) => {
+                console.log(`📥 Expenses snapshot: ${snapshot.docs.length} docs`);
                 const expensesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Expense[];
                 setExpenses(expensesData);
                 markLoaded('expenses');
             },
             (error) => {
-                console.error('Error loading expenses:', error);
+                console.error('❌ Error loading expenses:', error);
                 markLoaded('expenses');
             }
         );
 
         return () => {
+            console.log('🔌 Unsubscribing from Firebase listeners');
             unsubMusicians();
             unsubEvents();
             unsubPayments();
             unsubExpenses();
-            if (safetyTimer) clearTimeout(safetyTimer);
         };
     }, []);
 
