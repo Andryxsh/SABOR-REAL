@@ -1,0 +1,101 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // =================================================================
+    // 🛡️ SECURITY HELPER FUNCTIONS
+    // =================================================================
+    
+    // Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // TODO: Replace with specific admin email for maximum security
+    // function isAdmin() {
+    //   return request.auth.token.email == 'tu-email-admin@ejemplo.com';
+    // }
+
+    // Validate generic required fields
+    function hasRequiredFields(requiredFields) {
+      return request.resource.data.keys().hasAll(requiredFields);
+    }
+
+    // =================================================================
+    // 🔍 DATA VALIDATION FUNCTIONS (Schema Enforcement)
+    // =================================================================
+
+    function isValidMusician() {
+      let data = request.resource.data;
+      return hasRequiredFields(['nombre', 'category', 'status', 'tarifas']) &&
+             data.nombre is string &&
+             data.category in ['musico', 'staff', 'chofer', 'camara', 'administrador'] &&
+             data.status in ['activo', 'inactivo', 'vacaciones', 'suspendido'] &&
+             data.tarifas.discoteca is number;
+    }
+
+    function isValidEvent() {
+      let data = request.resource.data;
+      return hasRequiredFields(['title', 'type', 'date', 'status', 'precio']) &&
+             data.title is string &&
+             data.precio is number &&
+             data.precio >= 0 &&
+             data.status in ['Confirmado', 'Pendiente', 'Finalizado', 'Cancelado'];
+    }
+
+    function isValidPayment() {
+      let data = request.resource.data;
+      return hasRequiredFields(['musicianId', 'monto', 'tipo', 'fecha']) &&
+             data.monto is number &&
+             data.tipo in ['evento', 'adelanto', 'ajuste', 'descuento'];
+    }
+
+    function isValidExpense() {
+      let data = request.resource.data;
+      return hasRequiredFields(['concepto', 'monto', 'categoria', 'fecha']) &&
+             data.monto is number &&
+             data.concepto is string;
+    }
+
+    // =================================================================
+    // 📂 COLLECTION RULES
+    // =================================================================
+
+    // Users: Protected (Future Proofing)
+    match /users/{userId} {
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Musicians: Authenticad Read / Validated Write
+    match /musicians/{musicianId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidMusician();
+      allow update: if isAuthenticated() && isValidMusician();
+      allow delete: if isAuthenticated(); // Consider restricting to Admin only
+    }
+    
+    // Events: Authenticad Read / Validated Write
+    match /events/{eventId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidEvent();
+      allow update: if isAuthenticated() && isValidEvent();
+      allow delete: if isAuthenticated();
+    }
+    
+    // Payments: Authenticad Read / Validated Write
+    match /payments/{paymentId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidPayment();
+      allow update: if isAuthenticated() && isValidPayment();
+      allow delete: if isAuthenticated();
+    }
+    
+    // Expenses: Authenticad Read / Validated Write
+    match /expenses/{expenseId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidExpense();
+      allow update: if isAuthenticated() && isValidExpense();
+      allow delete: if isAuthenticated();
+    }
+  }
+}
