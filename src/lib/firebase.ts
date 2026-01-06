@@ -2,14 +2,14 @@ import { initializeApp } from "firebase/app";
 import { getFirestore, enableIndexedDbPersistence } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
-// TODO: Replace with your actual config from Firebase Console
+// Firebase configuration from environment variables
 const firebaseConfig = {
-    apiKey: "AIzaSyC9olpAu17pc1p43TOURH8jBWl4zP6CFhc",
-    authDomain: "sabor-real-bfc68.firebaseapp.com",
-    projectId: "sabor-real-bfc68",
-    storageBucket: "sabor-real-bfc68.firebasestorage.app",
-    messagingSenderId: "249559316320",
-    appId: "1:249559316320:web:23478677e6029085291005"
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
 // Initialize Firebase
