@@ -14,6 +14,14 @@ export default function EventDetail() {
     const [isAddMusicianModalOpen, setIsAddMusicianModalOpen] = useState(false);
     const [isCobroModalOpen, setIsCobroModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+    // Replacement Logic State
+    const [isReplacementMode, setIsReplacementMode] = useState(false);
+    const [repName, setRepName] = useState('');
+    const [repLastName, setRepLastName] = useState('');
+    const [repRole, setRepRole] = useState('');
+    const [repFee, setRepFee] = useState('');
+
     const [cobroAmount, setCobroAmount] = useState('');
 
     // Edit Form States
@@ -441,39 +449,158 @@ export default function EventDetail() {
                             </div>
                             <div className="flex items-center justify-between px-6">
                                 <h2 className="text-xl font-bold text-white tracking-tight">Agregar Músico</h2>
-                                <button
-                                    onClick={() => setIsAddMusicianModalOpen(false)}
-                                    className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 text-gray-300 hover:bg-white/20 hover:text-white transition-colors">
-                                    <span className="material-symbols-outlined text-xl font-bold">close</span>
-                                </button>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => setIsReplacementMode(!isReplacementMode)}
+                                        className={`px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1 transition-all ${isReplacementMode
+                                            ? 'bg-red-500 text-white shadow-lg shadow-red-500/30 ring-1 ring-red-400'
+                                            : 'bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20'
+                                            }`}
+                                    >
+                                        <span className="material-symbols-outlined text-sm">flash_on</span>
+                                        {isReplacementMode ? 'Cancelar Remplazo' : 'Remplazo Express'}
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setIsAddMusicianModalOpen(false);
+                                            setIsReplacementMode(false);
+                                        }}
+                                        className="w-8 h-8 flex items-center justify-center rounded-full bg-white/10 text-gray-300 hover:bg-white/20 hover:text-white transition-colors">
+                                        <span className="material-symbols-outlined text-xl font-bold">close</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
                         <div className="px-6 space-y-2">
-                            {musicians
-                                .filter(m => m.status === 'activo')
-                                .filter(m => !event.musicosAsignados.some(a => a.musicianId === m.id))
-                                .map(musician => (
-                                    <div
-                                        key={musician.id}
-                                        onClick={() => {
-                                            const tarifa = musician.tarifas[event.type] || 0;
-                                            addMusicianToEvent(musician.id, tarifa);
-                                        }}
-                                        className="p-4 bg-gray-800 hover:bg-gray-700 rounded-xl cursor-pointer transition-colors">
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <div className="text-white font-semibold">
-                                                    {musician.nombre} {musician.apellido}
+                            {isReplacementMode ? (
+                                <div className="bg-red-500/5 border border-red-500/20 rounded-2xl p-4 animate-fade-in relative overflow-hidden">
+                                    {/* Background glow */}
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+
+                                    <h3 className="text-red-400 font-bold text-sm mb-3 flex items-center gap-2">
+                                        <span className="material-symbols-outlined text-lg">emergency</span>
+                                        Remplazo de Emergencia
+                                    </h3>
+
+                                    <div className="space-y-3">
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <input
+                                                type="text"
+                                                placeholder="Nombre"
+                                                className="bg-black/40 border border-red-500/30 rounded-xl px-3 py-2 text-white placeholder-red-500/30 focus:outline-none focus:border-red-500 transition-colors"
+                                                value={repName}
+                                                onChange={e => setRepName(e.target.value)}
+                                            />
+                                            <input
+                                                type="text"
+                                                placeholder="Apellido (Opcional)"
+                                                className="bg-black/40 border border-red-500/30 rounded-xl px-3 py-2 text-white placeholder-red-500/30 focus:outline-none focus:border-red-500 transition-colors"
+                                                value={repLastName}
+                                                onChange={e => setRepLastName(e.target.value)}
+                                            />
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <select
+                                                className="bg-black/40 border border-red-500/30 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-red-500 transition-colors"
+                                                value={repRole}
+                                                onChange={e => setRepRole(e.target.value)}
+                                            >
+                                                <option value="" disabled>Rol / Función</option>
+                                                <optgroup label="Músicos">
+                                                    <option value="Trompeta">Trompeta</option>
+                                                    <option value="Saxofon">Saxofón</option>
+                                                    <option value="Trombon">Trombón</option>
+                                                    <option value="Bateria">Batería</option>
+                                                    <option value="Percusion">Percusión</option>
+                                                    <option value="Teclado">Teclado</option>
+                                                    <option value="Bajo">Bajo</option>
+                                                    <option value="Cantante">Cantante</option>
+                                                    <option value="Animador">Animador</option>
+                                                </optgroup>
+                                                <optgroup label="Staff y Técnica">
+                                                    <option value="Staff">Staff / Ayudante</option>
+                                                    <option value="Chofer">Chofer</option>
+                                                    <option value="Camara">Camarógrafo</option>
+                                                    <option value="Sonido">Sonidista</option>
+                                                    <option value="Seguridad">Seguridad</option>
+                                                    <option value="Otro">Otro</option>
+                                                </optgroup>
+                                            </select>
+
+                                            <input
+                                                type="number"
+                                                placeholder="Pago (Bs)"
+                                                className="bg-black/40 border border-red-500/30 rounded-xl px-3 py-2 text-white placeholder-red-500/30 focus:outline-none focus:border-red-500 transition-colors font-bold"
+                                                value={repFee}
+                                                onChange={e => setRepFee(e.target.value)}
+                                            />
+                                        </div>
+
+                                        <button
+                                            disabled={!repName || !repRole || !repFee}
+                                            onClick={async () => {
+                                                const { addDoc, collection } = await import('firebase/firestore');
+                                                const { db } = await import('../lib/firebase');
+
+                                                // 1. Create Musician
+                                                const docRef = await addDoc(collection(db, 'musicians'), {
+                                                    nombre: repName,
+                                                    apellido: repLastName || '(Remplazo)',
+                                                    role: repRole,
+                                                    status: 'inactivo', // Created as inactive so they don't appear in future events
+                                                    telefono: '',
+                                                    email: '',
+                                                    tarifas: { [event.type]: Number(repFee) }, // Set fee for this event type
+                                                    createdAt: new Date().toISOString(),
+                                                    updatedAt: new Date().toISOString(),
+                                                    isReplacement: true // Flag to identify replacements later
+                                                });
+
+                                                // 2. Add to Event
+                                                addMusicianToEvent(docRef.id, Number(repFee));
+
+                                                // Reset
+                                                setRepName('');
+                                                setRepLastName('');
+                                                setRepRole('');
+                                                setRepFee('');
+                                                setIsReplacementMode(false);
+                                            }}
+                                            className="w-full py-3 bg-gradient-to-r from-red-600 to-orange-600 rounded-xl text-white font-bold shadow-lg shadow-red-900/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2"
+                                        >
+                                            <span className="material-symbols-outlined">person_add</span>
+                                            Crear y Asignar Remplazo
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                musicians
+                                    .filter(m => m.status === 'activo')
+                                    .filter(m => !event.musicosAsignados.some(a => a.musicianId === m.id))
+                                    .map(musician => (
+                                        <div
+                                            key={musician.id}
+                                            onClick={() => {
+                                                const tarifa = musician.tarifas[event.type] || 0;
+                                                addMusicianToEvent(musician.id, tarifa);
+                                            }}
+                                            className="p-4 bg-gray-800 hover:bg-gray-700 rounded-xl cursor-pointer transition-colors">
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <div className="text-white font-semibold">
+                                                        {musician.nombre} {musician.apellido}
+                                                    </div>
+                                                    <div className="text-sm text-gray-400">{musician.role}</div>
                                                 </div>
-                                                <div className="text-sm text-gray-400">{musician.role}</div>
-                                            </div>
-                                            <div className="text-primary font-bold">
-                                                {musician.tarifas[event.type] || 0} Bs
+                                                <div className="text-primary font-bold">
+                                                    {musician.tarifas[event.type] || 0} Bs
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    ))
+                            )}
                         </div>
                     </div>
                 </div>

@@ -222,38 +222,7 @@ export default function Dashboard() {
                                         <span>Cerrar Sesión</span>
                                     </button>
 
-                                    {/* DEV TOOL: Reset Database - Moved to bottom */}
-                                    <div className="pt-4 border-t border-white/10 mt-2">
-                                        <button
-                                            onClick={async () => {
-                                                if (window.confirm('⚠️ PELIGRO: ESTO BORRARÁ TODO (Eventos, Pagos, Gastos). \n\n¿Estás 100% seguro?')) {
-                                                    try {
-                                                        // Usamos importación dinámica para evitar conflictos
-                                                        const { collection, getDocs, deleteDoc, doc } = await import('firebase/firestore');
-                                                        const { db } = await import('../lib/firebase');
 
-                                                        const clearColl = async (name: string) => {
-                                                            const snap = await getDocs(collection(db, name));
-                                                            const promises = snap.docs.map(d => deleteDoc(doc(db, name, d.id)));
-                                                            await Promise.all(promises);
-                                                        };
-
-                                                        await clearColl('events');
-                                                        await clearColl('payments');
-                                                        await clearColl('expenses');
-
-                                                        alert('✅ SE BORRÓ TODO. Reiniciando...');
-                                                        window.location.reload();
-                                                    } catch (e) {
-                                                        alert('Error: ' + e);
-                                                    }
-                                                }
-                                            }}
-                                            className="w-full py-2 bg-red-600/20 hover:bg-red-600/40 text-red-500 text-xs font-bold rounded border border-red-500/30 transition-all uppercase tracking-wider"
-                                        >
-                                            ⚠️ Limpiar BD (Reset)
-                                        </button>
-                                    </div>
                                 </div>
                             </div>
                         </>
