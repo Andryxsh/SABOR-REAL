@@ -17,7 +17,9 @@ export default function Dashboard() {
     // Calcular estadísticas
     const stats = useMemo(() => {
         // Próximos eventos (ordenados por fecha)
-        const today = new Date().toISOString().split('T')[0];
+        const d = new Date();
+        d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+        const today = d.toISOString().split('T')[0];
         const upcomingEvents = events
             .filter(e => e.date >= today && e.status !== 'Cancelado' && !e.locked && e.status !== 'Finalizado')
             .sort((a, b) => a.date.localeCompare(b.date))
@@ -68,7 +70,7 @@ export default function Dashboard() {
             })
             .filter(m => m.debt > 0)
             .sort((a, b) => b.debt - a.debt)
-            .slice(0, 5);
+            .sort((a, b) => b.debt - a.debt);
 
         // Suma total de deudas pendientes
         const totalPorPagarMusicos = musiciansWithDebt.reduce((sum, m) => sum + m.debt, 0);
@@ -141,6 +143,37 @@ export default function Dashboard() {
                                 onClick={() => setShowProfileMenu(false)}
                             ></div>
                             <div className="absolute right-0 top-14 z-50 w-72 bg-black/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-4 animate-in fade-in slide-in-from-top-4 origin-top-right ring-1 ring-white/10">
+                                {/* DEV TOOL: Reset Database Button */}
+                                <button
+                                    onClick={async () => {
+                                        if (window.confirm('⚠️ ¿ESTÁS SEGURO? Esto borrará TODOS los eventos, pagos y gastos. Solo quedarán los músicos. No hay vuelta atrás.')) {
+                                            const { collection, getDocs, deleteDoc, doc } = await import('firebase/firestore');
+                                            const { db } = await import('../lib/firebase');
+
+                                            // 1. Borrar Eventos
+                                            const eventsRef = collection(db, 'events');
+                                            const eventsSnap = await getDocs(eventsRef);
+                                            eventsSnap.forEach(d => deleteDoc(doc(db, 'events', d.id)));
+
+                                            // 2. Borrar Pagos
+                                            const paymentsRef = collection(db, 'payments');
+                                            const paymentsSnap = await getDocs(paymentsRef);
+                                            paymentsSnap.forEach(d => deleteDoc(doc(db, 'payments', d.id)));
+
+                                            // 3. Borrar Gastos
+                                            const expensesRef = collection(db, 'expenses');
+                                            const expensesSnap = await getDocs(expensesRef);
+                                            expensesSnap.forEach(d => deleteDoc(doc(db, 'expenses', d.id)));
+
+                                            alert('✅ Base de datos limpiada. Solo quedaron los músicos.');
+                                            window.location.reload();
+                                        }
+                                    }}
+                                    className="w-full mb-2 bg-red-900/30 text-red-500 text-xs py-1 rounded hover:bg-red-900/50"
+                                >
+                                    ⚠️ LIMPIAR BASE DE DATOS
+                                </button>
+
                                 <div className="flex flex-col items-center gap-3 pb-4 border-b border-white/10 relative overflow-hidden">
                                     {/* Background decoration */}
                                     <div className="absolute inset-0 bg-gradient-to-b from-purple-500/10 to-transparent pointer-events-none"></div>
@@ -188,6 +221,39 @@ export default function Dashboard() {
                                         </div>
                                         <span>Cerrar Sesión</span>
                                     </button>
+
+                                    {/* DEV TOOL: Reset Database - Moved to bottom */}
+                                    <div className="pt-4 border-t border-white/10 mt-2">
+                                        <button
+                                            onClick={async () => {
+                                                if (window.confirm('⚠️ PELIGRO: ESTO BORRARÁ TODO (Eventos, Pagos, Gastos). \n\n¿Estás 100% seguro?')) {
+                                                    try {
+                                                        // Usamos importación dinámica para evitar conflictos
+                                                        const { collection, getDocs, deleteDoc, doc } = await import('firebase/firestore');
+                                                        const { db } = await import('../lib/firebase');
+
+                                                        const clearColl = async (name: string) => {
+                                                            const snap = await getDocs(collection(db, name));
+                                                            const promises = snap.docs.map(d => deleteDoc(doc(db, name, d.id)));
+                                                            await Promise.all(promises);
+                                                        };
+
+                                                        await clearColl('events');
+                                                        await clearColl('payments');
+                                                        await clearColl('expenses');
+
+                                                        alert('✅ SE BORRÓ TODO. Reiniciando...');
+                                                        window.location.reload();
+                                                    } catch (e) {
+                                                        alert('Error: ' + e);
+                                                    }
+                                                }
+                                            }}
+                                            className="w-full py-2 bg-red-600/20 hover:bg-red-600/40 text-red-500 text-xs font-bold rounded border border-red-500/30 transition-all uppercase tracking-wider"
+                                        >
+                                            ⚠️ Limpiar BD (Reset)
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </>
@@ -449,7 +515,7 @@ export default function Dashboard() {
                         </div>
 
                         <div className="space-y-3">
-                            {stats.musiciansWithDebt.map(musician => (
+                            {stats.musiciansWithDebt.slice(0, 5).map(musician => (
                                 <div
                                     key={musician.id}
                                     className="flex items-center gap-3 p-4 bg-black/40 backdrop-blur-sm rounded-2xl border border-white/5 hover:border-yellow-500/30 transition-all hover:bg-white/5 group">
@@ -468,6 +534,15 @@ export default function Dashboard() {
                                     </div>
                                 </div>
                             ))}
+
+                            {stats.musiciansWithDebt.length > 5 && (
+                                <button
+                                    onClick={() => navigate('/musicians')}
+                                    className="w-full py-3 text-center text-xs font-bold text-white/50 hover:text-white uppercase tracking-widest border border-white/5 rounded-xl hover:bg-white/5 transition-all"
+                                >
+                                    + {stats.musiciansWithDebt.length - 5} Músicos con Deuda
+                                </button>
+                            )}
                         </div>
                     </div>
                 )}
