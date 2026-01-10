@@ -23,6 +23,7 @@ export default function EventDetail() {
     const [repFee, setRepFee] = useState('');
 
     const [cobroAmount, setCobroAmount] = useState('');
+    const [cobroMode, setCobroMode] = useState<'add' | 'fix'>('add'); // New state for correction mode
 
     // Edit Form States
     const [editTitle, setEditTitle] = useState('');
@@ -110,12 +111,23 @@ export default function EventDetail() {
     const handleRegistrarCobro = async () => {
         if (!cobroAmount) return;
         const amount = parseFloat(cobroAmount);
-        if (isNaN(amount) || amount <= 0) {
+
+        // Validation based on mode
+        if (isNaN(amount) || amount < 0) { // Allow 0 for corrections
             alert('Monto inválido');
             return;
         }
 
-        const newAdelanto = (event.adelanto || 0) + amount;
+        let newAdelanto = 0;
+        if (cobroMode === 'fix') {
+            // FIX MODE: Overwrite the total
+            newAdelanto = amount;
+        } else {
+            // ADD MODE: Sum to existing
+            if (amount <= 0) { alert('Monto debe ser mayor a 0 para sumar'); return; }
+            newAdelanto = (event.adelanto || 0) + amount;
+        }
+
         const newSaldo = event.precio - newAdelanto;
 
         await updateEvent(event.id, {
@@ -642,19 +654,45 @@ export default function EventDetail() {
             {isCobroModalOpen && (
                 <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
                     <div className="w-full max-w-sm bg-surface-dark rounded-2xl shadow-2xl ring-1 ring-white/10 p-6 space-y-4">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 mb-4">
                             <div className="size-12 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                                <span className="material-symbols-outlined text-emerald-400 text-2xl">payments</span>
+                                <span className="material-symbols-outlined text-emerald-400 text-2xl">
+                                    {cobroMode === 'add' ? 'payments' : 'edit_document'}
+                                </span>
                             </div>
                             <div>
-                                <h3 className="text-lg font-bold text-white">Registrar Cobro</h3>
-                                <p className="text-sm text-gray-400">Ingresa el monto recibido del cliente</p>
+                                <h3 className="text-lg font-bold text-white">
+                                    {cobroMode === 'add' ? 'Registrar Cobro' : 'Corregir Monto Total'}
+                                </h3>
+                                <p className="text-sm text-gray-400">
+                                    {cobroMode === 'add' ? 'Suma un pago al adelantado actual' : 'Corrige el valor total del adelantado'}
+                                </p>
                             </div>
+                        </div>
+
+                        {/* MODE TOGGLE */}
+                        <div className="flex bg-black/40 p-1 rounded-xl mb-4 border border-white/5">
+                            <button
+                                onClick={() => { setCobroMode('add'); setCobroAmount(''); }}
+                                className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 ${cobroMode === 'add' ? 'bg-emerald-500 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                            >
+                                <span className="material-symbols-outlined text-sm">add_circle</span>
+                                AGREGRAR PAGO
+                            </button>
+                            <button
+                                onClick={() => { setCobroMode('fix'); setCobroAmount(event.adelanto?.toString() || ''); }}
+                                className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 ${cobroMode === 'fix' ? 'bg-blue-500 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                            >
+                                <span className="material-symbols-outlined text-sm">edit</span>
+                                CORREGIR ERROR
+                            </button>
                         </div>
 
                         <div className="py-2">
                             <div className="flex justify-between items-end mb-1.5">
-                                <label className="text-xs text-gray-500 font-bold">MONTO A AGREGAR (Bs)</label>
+                                <label className="text-xs text-gray-500 font-bold">
+                                    {cobroMode === 'add' ? 'MONTO A SUMAR (Bs)' : 'NUEVO TOTAL ADELANTADO (Bs)'}
+                                </label>
                                 {(event.precio - event.adelanto) > 0 && (
                                     <button
                                         onClick={() => setCobroAmount((event.precio - event.adelanto).toString())}
