@@ -38,6 +38,8 @@ export interface Musician {
         privado: number;
         viaje: number;
         ensayo?: number;
+        privado_3h?: number; // New Type
+        viaje_3h?: number;   // New Type
     };
     formaPago?: 'efectivo' | 'transferencia';
     cuentaBancaria?: string;
@@ -62,7 +64,7 @@ export interface Event {
 
     // Básico
     title: string;
-    type: 'discoteca' | 'privado' | 'viaje' | 'ensayo';
+    type: 'discoteca' | 'privado' | 'viaje' | 'ensayo' | 'privado_3h' | 'viaje_3h';
     date: string;
     time: string;
     location: string;

@@ -14,6 +14,40 @@ export default function Events() {
     const [searchQuery, setSearchQuery] = useState('');
     const [deleteEvent_modal, setDeleteEvent_modal] = useState<Event | null>(null);
 
+    // CALENDAR VIEW STATE
+    const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
+    const [currentDate, setCurrentDate] = useState(new Date()); // For month navigation
+    const [selectedDate, setSelectedDate] = useState<string | null>(null); // 'YYYY-MM-DD' for bottom sheet
+
+    // CALENDAR HELPERS
+    const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
+    const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay(); // 0 = Sunday
+
+    // Generate Calendar Grid
+    const calendarDays = useMemo(() => {
+        const days = [];
+        // Fill empty slots for previous month
+        for (let i = 0; i < firstDayOfMonth; i++) {
+            days.push(null);
+        }
+        // Fill days
+        for (let i = 1; i <= daysInMonth; i++) {
+            const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+            days.push(dateStr);
+        }
+        return days;
+    }, [currentDate, daysInMonth, firstDayOfMonth]);
+
+    const changeMonth = (offset: number) => {
+        const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + offset, 1);
+        setCurrentDate(newDate);
+    };
+
+    // Filter events for specific date (Calendar)
+    const getEventsForDate = (dateStr: string) => {
+        return events.filter(e => e.date === dateStr);
+    };
+
     // Form states - TODOS LOS CAMPOS PROFESIONALES
     const [newEventTitle, setNewEventTitle] = useState('');
     const [newEventType, setNewEventType] = useState<Event['type']>('privado');
@@ -176,6 +210,8 @@ export default function Events() {
         privado: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&q=80&w=800',   // Elegant/Wedding
         viaje: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&q=80&w=800',     // Travel
         ensayo: 'https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?auto=format&fit=crop&q=80&w=800',    // Studio
+        privado_3h: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&q=80&w=800', // Reusing Privado
+        viaje_3h: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&q=80&w=800',   // Reusing Viaje
     };
 
     const defaultImage = 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&q=80&w=800'; // Generic Crowd
@@ -189,10 +225,21 @@ export default function Events() {
                     className="flex items-center justify-center size-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white transition-all hover:scale-105 active:scale-95 group">
                     <span className="material-symbols-outlined text-xl group-hover:-translate-x-1 transition-transform">arrow_back_ios_new</span>
                 </button>
-                <div className="flex flex-col items-center">
-                    <span className="text-[10px] text-gray-400 font-bold tracking-widest uppercase">Gestión</span>
-                    <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-white animate-text-flow">Eventos</h1>
+
+                {/* View Toggle */}
+                <div className="flex bg-white/5 rounded-full p-1 border border-white/10">
+                    <button
+                        onClick={() => setViewMode('list')}
+                        className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${viewMode === 'list' ? 'bg-white/10 text-white shadow-sm' : 'text-gray-400 hover:text-white'}`}>
+                        Lista
+                    </button>
+                    <button
+                        onClick={() => setViewMode('calendar')}
+                        className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${viewMode === 'calendar' ? 'bg-white/10 text-white shadow-sm' : 'text-gray-400 hover:text-white'}`}>
+                        Calendario
+                    </button>
                 </div>
+
                 <button
                     onClick={() => setIsModalOpen(true)}
                     className="flex items-center justify-center size-10 rounded-full bg-gradient-to-tr from-purple-600 to-blue-600 text-white shadow-[0_0_15px_rgba(168,85,247,0.4)] hover:shadow-[0_0_25px_rgba(168,85,247,0.6)] hover:scale-110 transition-all border border-white/20">
@@ -200,147 +247,219 @@ export default function Events() {
                 </button>
             </header>
 
-            {/* Smart Search Bar */}
-            <div className="px-4 mt-4">
-                <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <span className="material-symbols-outlined text-gray-500 group-focus-within:text-purple-400 transition-colors">search</span>
-                    </div>
-                    <input
-                        type="text"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Buscar evento, cliente o fecha..."
-                        className="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:bg-white/10 focus:border-purple-500/30 transition-all shadow-lg"
-                    />
-                    {searchQuery && (
-                        <button
-                            onClick={() => setSearchQuery('')}
-                            className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-500 hover:text-white">
-                            <span className="material-symbols-outlined text-sm">close</span>
-                        </button>
-                    )}
-                </div>
-            </div>
-
-            {/* Filters */}
-            <div className="px-4 py-4 flex gap-2 overflow-x-auto no-scrollbar shrink-0">
-                {['Confirmados', 'Historial', 'Pendientes'].map(f => (
-                    <button
-                        key={f}
-                        onClick={() => {
-                            setFilter(f);
-                            setSearchQuery(''); // Clear search when switching tabs
-                        }}
-                        className={`px-5 py-1.5 text-xs font-bold uppercase tracking-wider rounded-full whitespace-nowrap transition-all border ${filter === f
-                            ? 'bg-purple-500/20 border-purple-500/50 text-purple-200 shadow-[0_0_15px_rgba(168,85,247,0.2)]'
-                            : 'bg-black/40 border-white/10 text-gray-400 hover:bg-white/5 hover:border-white/20'
-                            }`}>
-                        {f}
-                    </button>
-                ))}
-            </div>
-
-            {/* Events List */}
-            <div className="px-4 space-y-4">
-                {loading ? (
-                    <div className="flex flex-col items-center justify-center py-20 text-white/30 animate-pulse">
-                        <span className="material-symbols-outlined text-5xl mb-4">hourglass_top</span>
-                        <p className="text-sm font-medium">Cargando eventos...</p>
-                    </div>
-                ) : filteredEvents.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-20 text-white/30 bg-black/20 backdrop-blur-sm rounded-3xl border border-white/5 mx-4">
-                        <span className="material-symbols-outlined text-5xl mb-4 opacity-50">event_busy</span>
-                        <p className="text-sm font-medium">No se encontraron eventos</p>
-                    </div>
-                ) : (
-                    filteredEvents.map((event: Event) => (
-                        <div
-                            key={event.id}
-                            onClick={() => navigate(`/event/${event.id}`)}
-                            className={`group relative bg-black/40 backdrop-blur-md rounded-3xl p-5 border border-white/10 hover:bg-white/5 hover:border-white/20 transition-all duration-300 cursor-pointer overflow-hidden ${event.locked ? 'grayscale opacity-60' : ''}`}>
-
-                            {/* Background Image with Gradient Overlay */}
-                            <div className="absolute inset-0 z-0">
-                                <img
-                                    src={eventImages[event.type] || defaultImage}
-                                    alt="Event Background"
-                                    loading="lazy"
-                                    className="w-full h-full object-cover opacity-70 group-hover:scale-105 transition-transform duration-700"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
+            {viewMode === 'list' ? (
+                <>
+                    {/* Smart Search Bar */}
+                    <div className="px-4 mt-4">
+                        <div className="relative group">
+                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <span className="material-symbols-outlined text-gray-500 group-focus-within:text-purple-400 transition-colors">search</span>
                             </div>
-
-
-                            {/* Hover Glow Effect */}
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl -mr-16 -mt-16 group-hover:bg-purple-500/20 transition-colors pointer-events-none"></div>
-
-                            <div className="flex items-start justify-between gap-4 relative z-10">
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border ${event.type === 'discoteca' ? 'bg-purple-500/10 border-purple-500/30 text-purple-300' :
-                                            event.type === 'privado' ? 'bg-blue-500/10 border-blue-500/30 text-blue-300' :
-                                                event.type === 'viaje' ? 'bg-green-500/10 border-green-500/30 text-green-300' :
-                                                    'bg-gray-500/10 border-gray-500/30 text-gray-300'
-                                            }`}>
-                                            {event.type}
-                                        </span>
-                                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border ${event.status === 'Confirmado' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.2)]' :
-                                            event.status === 'Pendiente' ? 'bg-yellow-500/10 border-yellow-500/30 text-yellow-300 shadow-[0_0_10px_rgba(234,179,8,0.2)]' :
-                                                event.status === 'Finalizado' ? 'bg-gray-500/10 border-gray-500/30 text-gray-400' :
-                                                    'bg-red-500/10 border-red-500/30 text-red-300'
-                                            }`}>
-                                            {event.status}
-                                        </span>
-                                    </div>
-
-                                    <h3 className="text-lg font-bold text-white group-hover:text-purple-200 transition-colors truncate mb-3">
-                                        {event.title}
-                                    </h3>
-
-                                    <div className="space-y-2">
-                                        <div className="flex items-center gap-2 text-xs text-gray-400">
-                                            <div className="size-6 rounded-full bg-white/5 flex items-center justify-center border border-white/5">
-                                                <span className="material-symbols-outlined text-sm">calendar_today</span>
-                                            </div>
-                                            <span className="text-gray-300">{event.date} • {event.time}</span>
-                                        </div>
-                                        <div className="flex items-center gap-2 text-xs text-gray-400">
-                                            <div className="size-6 rounded-full bg-white/5 flex items-center justify-center border border-white/5">
-                                                <span className="material-symbols-outlined text-sm">location_on</span>
-                                            </div>
-                                            <span className="truncate text-gray-300">{event.location}</span>
-                                        </div>
-                                        {event.cliente?.nombre && (
-                                            <div className="flex items-center gap-2 text-xs text-gray-400">
-                                                <div className="size-6 rounded-full bg-white/5 flex items-center justify-center border border-white/5">
-                                                    <span className="material-symbols-outlined text-sm">person</span>
-                                                </div>
-                                                <span className="truncate text-gray-300">{event.cliente.nombre}</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="text-right shrink-0">
-                                    <div className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-300">{event.precio} <span className="text-xs text-white/50 font-normal">Bs</span></div>
-                                    {event.adelanto > 0 && (
-                                        <div className="text-[10px] text-emerald-400 font-medium mt-1 inline-flex items-center gap-1 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                                            <span className="material-symbols-outlined text-[10px]">check_circle</span>
-                                            Adelanto: {event.adelanto}
-                                        </div>
-                                    )}
-                                    {event.musicosAsignados.length > 0 && (
-                                        <div className="text-[10px] text-gray-500 mt-2 flex items-center justify-end gap-1">
-                                            <span className="material-symbols-outlined text-[10px]">groups</span>
-                                            {event.musicosAsignados.length} músicos
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
+                            <input
+                                type="text"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                placeholder="Buscar evento, cliente o fecha..."
+                                className="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:bg-white/10 focus:border-purple-500/30 transition-all shadow-lg"
+                            />
+                            {searchQuery && (
+                                <button
+                                    onClick={() => setSearchQuery('')}
+                                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-500 hover:text-white">
+                                    <span className="material-symbols-outlined text-sm">close</span>
+                                </button>
+                            )}
                         </div>
-                    ))
-                )}
-            </div>
+                    </div>
+
+                    {/* Filters */}
+                    <div className="px-4 py-4 flex gap-2 overflow-x-auto no-scrollbar shrink-0">
+                        {['Confirmados', 'Historial', 'Pendientes'].map(f => (
+                            <button
+                                key={f}
+                                onClick={() => {
+                                    setFilter(f);
+                                    setSearchQuery(''); // Clear search when switching tabs
+                                }}
+                                className={`px-5 py-1.5 text-xs font-bold uppercase tracking-wider rounded-full whitespace-nowrap transition-all border ${filter === f
+                                    ? 'bg-purple-500/20 border-purple-500/50 text-purple-200 shadow-[0_0_15px_rgba(168,85,247,0.2)]'
+                                    : 'bg-black/40 border-white/10 text-gray-400 hover:bg-white/5 hover:border-white/20'
+                                    }`}>
+                                {f}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Events List */}
+                    <div className="px-4 space-y-4">
+                        {loading ? (
+                            <div className="flex flex-col items-center justify-center py-20 text-white/30 animate-pulse">
+                                <span className="material-symbols-outlined text-5xl mb-4">hourglass_top</span>
+                                <p className="text-sm font-medium">Cargando eventos...</p>
+                            </div>
+                        ) : filteredEvents.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-20 text-white/30 bg-black/20 backdrop-blur-sm rounded-3xl border border-white/5 mx-4">
+                                <span className="material-symbols-outlined text-5xl mb-4 opacity-50">event_busy</span>
+                                <p className="text-sm font-medium">No se encontraron eventos</p>
+                            </div>
+                        ) : (
+                            filteredEvents.map((event: Event) => (
+                                <div
+                                    key={event.id}
+                                    onClick={() => navigate(`/event/${event.id}`)}
+                                    className={`group relative bg-black/40 backdrop-blur-md rounded-3xl p-5 border border-white/10 hover:bg-white/5 hover:border-white/20 transition-all duration-300 cursor-pointer overflow-hidden ${event.locked ? 'grayscale opacity-60' : ''}`}>
+
+                                    {/* Background Image with Gradient Overlay */}
+                                    <div className="absolute inset-0 z-0">
+                                        <img
+                                            src={eventImages[event.type] || defaultImage}
+                                            alt="Event Background"
+                                            loading="lazy"
+                                            className="w-full h-full object-cover opacity-70 group-hover:scale-105 transition-transform duration-700"
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
+                                    </div>
+
+
+                                    {/* Hover Glow Effect */}
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl -mr-16 -mt-16 group-hover:bg-purple-500/20 transition-colors pointer-events-none"></div>
+
+                                    <div className="flex items-start justify-between gap-4 relative z-10">
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border ${event.type === 'discoteca' ? 'bg-purple-500/10 border-purple-500/30 text-purple-300' :
+                                                    event.type === 'privado' ? 'bg-blue-500/10 border-blue-500/30 text-blue-300' :
+                                                        event.type === 'viaje' ? 'bg-green-500/10 border-green-500/30 text-green-300' :
+                                                            event.type === 'privado_3h' ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-300' :
+                                                                event.type === 'viaje_3h' ? 'bg-teal-500/10 border-teal-500/30 text-teal-300' :
+                                                                    'bg-gray-500/10 border-gray-500/30 text-gray-300'
+                                                    }`}>
+                                                    {event.type}
+                                                </span>
+                                                <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border ${event.status === 'Confirmado' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.2)]' :
+                                                    event.status === 'Pendiente' ? 'bg-yellow-500/10 border-yellow-500/30 text-yellow-300 shadow-[0_0_10px_rgba(234,179,8,0.2)]' :
+                                                        event.status === 'Finalizado' ? 'bg-gray-500/10 border-gray-500/30 text-gray-400' :
+                                                            'bg-red-500/10 border-red-500/30 text-red-300'
+                                                    }`}>
+                                                    {event.status}
+                                                </span>
+                                            </div>
+
+                                            <h3 className="text-lg font-bold text-white group-hover:text-purple-200 transition-colors truncate mb-3">
+                                                {event.title}
+                                            </h3>
+
+                                            <div className="space-y-2">
+                                                <div className="flex items-center gap-2 text-xs text-gray-400">
+                                                    <div className="size-6 rounded-full bg-white/5 flex items-center justify-center border border-white/5">
+                                                        <span className="material-symbols-outlined text-sm">calendar_today</span>
+                                                    </div>
+                                                    <span className="text-gray-300">{event.date} • {event.time}</span>
+                                                </div>
+                                                <div className="flex items-center gap-2 text-xs text-gray-400">
+                                                    <div className="size-6 rounded-full bg-white/5 flex items-center justify-center border border-white/5">
+                                                        <span className="material-symbols-outlined text-sm">location_on</span>
+                                                    </div>
+                                                    <span className="truncate text-gray-300">{event.location}</span>
+                                                </div>
+                                                {event.cliente?.nombre && (
+                                                    <div className="flex items-center gap-2 text-xs text-gray-400">
+                                                        <div className="size-6 rounded-full bg-white/5 flex items-center justify-center border border-white/5">
+                                                            <span className="material-symbols-outlined text-sm">person</span>
+                                                        </div>
+                                                        <span className="truncate text-gray-300">{event.cliente.nombre}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="text-right shrink-0">
+                                            <div className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-300">{event.precio} <span className="text-xs text-white/50 font-normal">Bs</span></div>
+                                            {event.adelanto > 0 && (
+                                                <div className="text-[10px] text-emerald-400 font-medium mt-1 inline-flex items-center gap-1 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                                                    <span className="material-symbols-outlined text-[10px]">check_circle</span>
+                                                    Adelanto: {event.adelanto}
+                                                </div>
+                                            )}
+                                            {event.musicosAsignados.length > 0 && (
+                                                <div className="text-[10px] text-gray-500 mt-2 flex items-center justify-end gap-1">
+                                                    <span className="material-symbols-outlined text-[10px]">groups</span>
+                                                    {event.musicosAsignados.length} músicos
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </>
+            ) : (
+                // CALENDAR GRID
+                <div className="px-4 py-6 animate-fade-in">
+                    {/* Month Navigation */}
+                    <div className="flex items-center justify-between mb-6 bg-white/5 p-4 rounded-3xl border border-white/10">
+                        <button onClick={() => changeMonth(-1)} className="size-10 flex items-center justify-center rounded-xl bg-black/40 text-white hover:bg-white/10 transition-colors">
+                            <span className="material-symbols-outlined">chevron_left</span>
+                        </button>
+                        <h2 className="text-xl font-bold capitalize text-white">
+                            {currentDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
+                        </h2>
+                        <button onClick={() => changeMonth(1)} className="size-10 flex items-center justify-center rounded-xl bg-black/40 text-white hover:bg-white/10 transition-colors">
+                            <span className="material-symbols-outlined">chevron_right</span>
+                        </button>
+                    </div>
+
+                    {/* Weekdays */}
+                    <div className="grid grid-cols-7 mb-4">
+                        {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map(day => (
+                            <div key={day} className="text-center text-xs font-bold text-gray-500 uppercase tracking-widest">
+                                {day}
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Days Grid */}
+                    <div className="grid grid-cols-7 gap-2">
+                        {calendarDays.map((dateStr, i) => {
+                            if (!dateStr) return <div key={`empty-${i}`} className="aspect-square"></div>;
+
+                            const dayNumber = parseInt(dateStr.split('-')[2]);
+                            const eventsOnDay = getEventsForDate(dateStr);
+                            const hasEvents = eventsOnDay.length > 0;
+                            const isSelected = selectedDate === dateStr;
+                            const isToday = dateStr === new Date().toISOString().split('T')[0];
+
+                            return (
+                                <button
+                                    key={dateStr}
+                                    onClick={() => setSelectedDate(dateStr)}
+                                    className={`aspect-square rounded-2xl flex flex-col items-center justify-center relative transition-all border
+                                        ${isSelected ? 'bg-purple-600 border-purple-400 text-white shadow-lg shadow-purple-500/30' :
+                                            hasEvents ? 'bg-white/10 border-white/20 text-white hover:bg-white/20' :
+                                                'bg-white/5 border-transparent text-gray-500 hover:bg-white/10'
+                                        } cursor-pointer ${isToday ? 'ring-1 ring-emerald-500 text-emerald-400 font-bold' : ''}`}>
+
+                                    <span className="text-sm">{dayNumber}</span>
+
+                                    {/* Event Dots */}
+                                    <div className="flex gap-0.5 mt-1">
+                                        {eventsOnDay.slice(0, 3).map((e, idx) => (
+                                            <div key={idx} className={`size-1.5 rounded-full 
+                                                ${e.type === 'discoteca' ? 'bg-purple-400' :
+                                                    e.type === 'privado' ? 'bg-blue-400' :
+                                                        e.type === 'viaje' ? 'bg-green-400' :
+                                                            e.type === 'privado_3h' ? 'bg-indigo-400' :
+                                                                e.type === 'viaje_3h' ? 'bg-teal-400' : 'bg-gray-400'}`}
+                                            />
+                                        ))}
+                                        {eventsOnDay.length > 3 && <div className="size-1.5 rounded-full bg-white/50" />}
+                                    </div>
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
 
             {/* Add Event Modal */}
             {isModalOpen && createPortal(
@@ -384,7 +503,9 @@ export default function Events() {
                                             className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-purple-500/50 focus:bg-white/10 appearance-none">
                                             <option value="discoteca" className="bg-gray-900 text-white">Discoteca/Bar</option>
                                             <option value="privado" className="bg-gray-900 text-white">Evento Privado</option>
+                                            <option value="privado_3h" className="bg-gray-900 text-white">Privado (3 Horas)</option>
                                             <option value="viaje" className="bg-gray-900 text-white">Viaje</option>
+                                            <option value="viaje_3h" className="bg-gray-900 text-white">Viaje (3 Horas)</option>
                                             <option value="ensayo" className="bg-gray-900 text-white">Ensayo</option>
                                         </select>
                                     </div>
@@ -537,6 +658,83 @@ export default function Events() {
                                     Eliminar
                                 </button>
                             </div>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
+            {/* Day Detail Bottom Sheet */}
+            {selectedDate && createPortal(
+                <div
+                    className="fixed inset-0 z-[150] bg-black/80 backdrop-blur-sm flex items-end justify-center animate-fade-in"
+                    onClick={() => setSelectedDate(null)}
+                >
+                    <div
+                        className="w-full max-w-md bg-[#0a0a0a] rounded-t-3xl border-t border-white/10 p-6 animate-slide-up shadow-2xl max-h-[85vh] overflow-y-auto custom-scrollbar"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        {/* Handle */}
+                        <div className="w-12 h-1 bg-white/20 rounded-full mx-auto mb-6"></div>
+
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-xl font-bold text-white capitalize">
+                                {new Date(selectedDate + 'T12:00:00').toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
+                            </h3>
+                            <button
+                                onClick={() => setSelectedDate(null)}
+                                className="size-8 rounded-full bg-white/5 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+                            >
+                                <span className="material-symbols-outlined">close</span>
+                            </button>
+                        </div>
+
+                        <div className="space-y-4 pb-10">
+                            {getEventsForDate(selectedDate).length === 0 ? (
+                                <div className="text-center py-8">
+                                    <p className="text-gray-500 mb-2">Sin eventos programados</p>
+                                    <p className="text-xs text-gray-600">Toca el botón de abajo para agregar uno.</p>
+                                </div>
+                            ) : (
+                                getEventsForDate(selectedDate).map((event: Event) => (
+                                    <div
+                                        key={event.id}
+                                        onClick={() => {
+                                            setSelectedDate(null);
+                                            navigate(`/event/${event.id}`);
+                                        }}
+                                        className={`group relative bg-black/40 backdrop-blur-md rounded-2xl p-4 border border-white/10 hover:bg-white/5 transition-all cursor-pointer overflow-hidden active:scale-95 ${event.locked ? 'grayscale opacity-60' : ''}`}
+                                    >
+                                        {/* Simplificado para Bottom Sheet */}
+                                        <div className="flex items-center justify-between gap-4">
+                                            <div className="flex-1 overflow-hidden">
+                                                <h4 className="text-white font-bold text-lg leading-tight mb-1 truncate">{event.title}</h4>
+                                                <div className="flex items-center gap-2 text-xs text-gray-400">
+                                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${event.type === 'discoteca' ? 'text-purple-300 bg-purple-500/10' :
+                                                        event.type === 'privado' ? 'text-blue-300 bg-blue-500/10' : 'text-gray-300 bg-gray-500/10'
+                                                        }`}>{event.type}</span>
+                                                    <span>• {event.time}</span>
+                                                </div>
+                                            </div>
+                                            <div className="text-right shrink-0">
+                                                <span className="block text-emerald-400 font-bold text-lg">{event.precio} <span className="text-xs font-normal text-white/50">Bs</span></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+
+                            <button
+                                onClick={() => {
+                                    // Pre-fill date for new event
+                                    setNewEventDate(selectedDate);
+                                    setSelectedDate(null);
+                                    setIsModalOpen(true);
+                                }}
+                                className="w-full py-4 mt-2 rounded-xl bg-white/5 border border-white/10 text-purple-400 font-bold hover:bg-white/10 flex items-center justify-center gap-2 transition-all active:scale-95"
+                            >
+                                <span className="material-symbols-outlined">add_circle</span>
+                                Agregar Evento este Día
+                            </button>
                         </div>
                     </div>
                 </div>,
