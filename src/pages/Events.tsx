@@ -72,6 +72,7 @@ export default function Events() {
     // Estado
     const [newEventStatus, setNewEventStatus] = useState<Event['status']>('Pendiente');
     const [newEventNotas, setNewEventNotas] = useState('');
+    const [driverTravelRate, setDriverTravelRate] = useState(''); // New state for manual driver rate (Travel)
 
     // Auto-open modal if navigated from Dashboard
     useEffect(() => {
@@ -123,12 +124,40 @@ export default function Events() {
             // AUTOMÁTICAMENTE agregar TODOS los músicos activos con sus tarifas
             newEvent.musicosAsignados = musicians
                 .filter(m => m.status === 'activo')
-                .map(musician => ({
-                    musicianId: musician.id,
-                    asistio: false, // Por defecto NO marcado - se marca después del evento
-                    montoPagar: musician.tarifas[newEventType] || 0,
-                    pagado: false
-                }));
+                .map(musician => {
+                    let monto = musician.tarifas[newEventType] || 0;
+
+                    // LÓGICA ESPECIAL PARA CHOFERES
+                    if (musician.category === 'chofer') {
+                        // CASO 1: VIAJE (Prioridad Manual o Tarifa)
+                        if (newEventType === 'viaje' || newEventType === 'viaje_3h') {
+                            if (driverTravelRate) {
+                                monto = parseFloat(driverTravelRate); // Override manual
+                            }
+                        }
+                        // CASO 2: CIUDAD (Tarifa Reducida si ya tiene evento hoy)
+                        else {
+                            // Buscar otros eventos ACTIVOS en la misma fecha donde este chofer ya esté asignado
+                            const existingEventsToday = events.filter(e =>
+                                e.date === newEventDate &&
+                                e.status !== 'Cancelado' &&
+                                e.musicosAsignados.some(ma => ma.musicianId === musician.id)
+                            );
+
+                            if (existingEventsToday.length > 0) {
+                                // Ya tiene evento hoy -> Tarifa Reducida
+                                monto = musician.tarifas.chofer_extra || 100;
+                            }
+                        }
+                    }
+
+                    return {
+                        musicianId: musician.id,
+                        asistio: false, // Por defecto NO marcado - se marca después del evento
+                        montoPagar: monto,
+                        pagado: false
+                    };
+                });
 
             await addEvent(newEvent);
 
@@ -169,6 +198,7 @@ export default function Events() {
         setNewEventAdelanto('');
         setNewEventStatus('Pendiente');
         setNewEventNotas('');
+        setDriverTravelRate('');
     };
 
     const filteredEvents = useMemo(() => {
@@ -612,14 +642,38 @@ export default function Events() {
                                                 value={newEventAdelanto}
                                                 onChange={(e) => setNewEventAdelanto(e.target.value)}
                                                 placeholder="0.00"
-                                                className="w-full pl-8 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold placeholder-white/10 focus:outline-none focus:border-emerald-500/50"
+                                                className="w-full pl-8 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-emerald-400 font-bold placeholder-white/10 focus:outline-none focus:border-emerald-500/50"
                                             />
-                                            <span className="absolute left-3 top-3 text-gray-500 font-bold">Bs</span>
+                                            <span className="absolute left-3 top-3 text-emerald-500/50 font-bold">Bs</span>
                                         </div>
                                     </div>
+
+                                    {/* Input especial para Choferes en Viajes */}
+                                    {(newEventType === 'viaje' || newEventType === 'viaje_3h') && (
+                                        <div className="mt-4 animate-fade-in">
+                                            <label className="block text-blue-400 text-xs font-bold mb-1.5 ml-1 flex items-center gap-1">
+                                                <span className="material-symbols-outlined text-[14px]">local_shipping</span>
+                                                TARIFA CHOFERES (Manual)
+                                            </label>
+                                            <div className="relative">
+                                                <input
+                                                    type="number"
+                                                    value={driverTravelRate}
+                                                    onChange={(e) => setDriverTravelRate(e.target.value)}
+                                                    placeholder="Monto acordado..."
+                                                    className="w-full pl-8 pr-4 py-3 bg-blue-500/10 border border-blue-500/30 rounded-xl text-blue-300 font-bold placeholder-blue-300/30 focus:outline-none focus:border-blue-500/50"
+                                                />
+                                                <span className="absolute left-3 top-3 text-blue-500/50 font-bold">Bs</span>
+                                            </div>
+                                            <p className="text-[10px] text-gray-500 mt-1 ml-1">
+                                                * Si se deja vacío, usa la tarifa de perfil.
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
+
 
                         <div className="p-4 border-t border-white/10 bg-black/20 backdrop-blur-md">
                             <button
@@ -632,117 +686,122 @@ export default function Events() {
                     </div>
                 </div>,
                 document.body
-            )}
+            )
+            }
 
             {/* Delete Confirmation */}
-            {deleteEvent_modal && createPortal(
-                <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center p-6 animate-fade-in">
-                    <div className="w-full max-w-sm bg-[#0a0a0a] border border-red-500/30 rounded-3xl p-6 shadow-[0_0_50px_rgba(239,68,68,0.2)] animate-scale-in will-change-transform">
-                        <div className="flex flex-col items-center text-center gap-4">
-                            <div className="size-16 rounded-full bg-red-500/10 flex items-center justify-center border border-red-500/20 animate-pulse">
-                                <span className="material-symbols-outlined text-red-500 text-3xl">warning</span>
-                            </div>
-                            <div>
-                                <h3 className="text-xl font-bold text-white mb-2">¿Eliminar Evento?</h3>
-                                <p className="text-gray-400 text-sm">
-                                    Estás a punto de eliminar <br /><span className="text-white font-bold">"{deleteEvent_modal.title}"</span>.
-                                    <br />Esta acción es irreversible.
-                                </p>
-                            </div>
-                            <div className="flex gap-3 w-full mt-2">
-                                <button
-                                    onClick={() => setDeleteEvent_modal(null)}
-                                    className="flex-1 py-3 rounded-xl bg-white/5 border border-white/10 text-white font-semibold hover:bg-white/10 transition-colors">
-                                    Cancelar
-                                </button>
-                                <button
-                                    onClick={handleDeleteEvent}
-                                    className="flex-1 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold shadow-lg shadow-red-500/30 transition-colors">
-                                    Eliminar
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>,
-                document.body
-            )}
-            {/* Day Detail Bottom Sheet */}
-            {selectedDate && createPortal(
-                <div
-                    className="fixed inset-0 z-[150] bg-black/80 backdrop-blur-sm flex items-end justify-center animate-fade-in"
-                    onClick={() => setSelectedDate(null)}
-                >
-                    <div
-                        className="w-full max-w-md bg-[#0a0a0a] rounded-t-3xl border-t border-white/10 p-6 animate-slide-up shadow-2xl max-h-[85vh] overflow-y-auto custom-scrollbar"
-                        onClick={e => e.stopPropagation()}
-                    >
-                        {/* Handle */}
-                        <div className="w-12 h-1 bg-white/20 rounded-full mx-auto mb-6"></div>
-
-                        <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-xl font-bold text-white capitalize">
-                                {new Date(selectedDate + 'T12:00:00').toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
-                            </h3>
-                            <button
-                                onClick={() => setSelectedDate(null)}
-                                className="size-8 rounded-full bg-white/5 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
-                            >
-                                <span className="material-symbols-outlined">close</span>
-                            </button>
-                        </div>
-
-                        <div className="space-y-4 pb-10">
-                            {getEventsForDate(selectedDate).length === 0 ? (
-                                <div className="text-center py-8">
-                                    <p className="text-gray-500 mb-2">Sin eventos programados</p>
-                                    <p className="text-xs text-gray-600">Toca el botón de abajo para agregar uno.</p>
+            {
+                deleteEvent_modal && createPortal(
+                    <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center p-6 animate-fade-in">
+                        <div className="w-full max-w-sm bg-[#0a0a0a] border border-red-500/30 rounded-3xl p-6 shadow-[0_0_50px_rgba(239,68,68,0.2)] animate-scale-in will-change-transform">
+                            <div className="flex flex-col items-center text-center gap-4">
+                                <div className="size-16 rounded-full bg-red-500/10 flex items-center justify-center border border-red-500/20 animate-pulse">
+                                    <span className="material-symbols-outlined text-red-500 text-3xl">warning</span>
                                 </div>
-                            ) : (
-                                getEventsForDate(selectedDate).map((event: Event) => (
-                                    <div
-                                        key={event.id}
-                                        onClick={() => {
-                                            setSelectedDate(null);
-                                            navigate(`/event/${event.id}`);
-                                        }}
-                                        className={`group relative bg-black/40 backdrop-blur-md rounded-2xl p-4 border border-white/10 hover:bg-white/5 transition-all cursor-pointer overflow-hidden active:scale-95 ${event.locked ? 'grayscale opacity-60' : ''}`}
-                                    >
-                                        {/* Simplificado para Bottom Sheet */}
-                                        <div className="flex items-center justify-between gap-4">
-                                            <div className="flex-1 overflow-hidden">
-                                                <h4 className="text-white font-bold text-lg leading-tight mb-1 truncate">{event.title}</h4>
-                                                <div className="flex items-center gap-2 text-xs text-gray-400">
-                                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${event.type === 'discoteca' ? 'text-purple-300 bg-purple-500/10' :
-                                                        event.type === 'privado' ? 'text-blue-300 bg-blue-500/10' : 'text-gray-300 bg-gray-500/10'
-                                                        }`}>{event.type}</span>
-                                                    <span>• {event.time}</span>
+                                <div>
+                                    <h3 className="text-xl font-bold text-white mb-2">¿Eliminar Evento?</h3>
+                                    <p className="text-gray-400 text-sm">
+                                        Estás a punto de eliminar <br /><span className="text-white font-bold">"{deleteEvent_modal.title}"</span>.
+                                        <br />Esta acción es irreversible.
+                                    </p>
+                                </div>
+                                <div className="flex gap-3 w-full mt-2">
+                                    <button
+                                        onClick={() => setDeleteEvent_modal(null)}
+                                        className="flex-1 py-3 rounded-xl bg-white/5 border border-white/10 text-white font-semibold hover:bg-white/10 transition-colors">
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        onClick={handleDeleteEvent}
+                                        className="flex-1 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold shadow-lg shadow-red-500/30 transition-colors">
+                                        Eliminar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>,
+                    document.body
+                )
+            }
+            {/* Day Detail Bottom Sheet */}
+            {
+                selectedDate && createPortal(
+                    <div
+                        className="fixed inset-0 z-[150] bg-black/80 backdrop-blur-sm flex items-end justify-center animate-fade-in"
+                        onClick={() => setSelectedDate(null)}
+                    >
+                        <div
+                            className="w-full max-w-md bg-[#0a0a0a] rounded-t-3xl border-t border-white/10 p-6 animate-slide-up shadow-2xl max-h-[85vh] overflow-y-auto custom-scrollbar"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            {/* Handle */}
+                            <div className="w-12 h-1 bg-white/20 rounded-full mx-auto mb-6"></div>
+
+                            <div className="flex items-center justify-between mb-6">
+                                <h3 className="text-xl font-bold text-white capitalize">
+                                    {new Date(selectedDate + 'T12:00:00').toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
+                                </h3>
+                                <button
+                                    onClick={() => setSelectedDate(null)}
+                                    className="size-8 rounded-full bg-white/5 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+                                >
+                                    <span className="material-symbols-outlined">close</span>
+                                </button>
+                            </div>
+
+                            <div className="space-y-4 pb-10">
+                                {getEventsForDate(selectedDate).length === 0 ? (
+                                    <div className="text-center py-8">
+                                        <p className="text-gray-500 mb-2">Sin eventos programados</p>
+                                        <p className="text-xs text-gray-600">Toca el botón de abajo para agregar uno.</p>
+                                    </div>
+                                ) : (
+                                    getEventsForDate(selectedDate).map((event: Event) => (
+                                        <div
+                                            key={event.id}
+                                            onClick={() => {
+                                                setSelectedDate(null);
+                                                navigate(`/event/${event.id}`);
+                                            }}
+                                            className={`group relative bg-black/40 backdrop-blur-md rounded-2xl p-4 border border-white/10 hover:bg-white/5 transition-all cursor-pointer overflow-hidden active:scale-95 ${event.locked ? 'grayscale opacity-60' : ''}`}
+                                        >
+                                            {/* Simplificado para Bottom Sheet */}
+                                            <div className="flex items-center justify-between gap-4">
+                                                <div className="flex-1 overflow-hidden">
+                                                    <h4 className="text-white font-bold text-lg leading-tight mb-1 truncate">{event.title}</h4>
+                                                    <div className="flex items-center gap-2 text-xs text-gray-400">
+                                                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${event.type === 'discoteca' ? 'text-purple-300 bg-purple-500/10' :
+                                                            event.type === 'privado' ? 'text-blue-300 bg-blue-500/10' : 'text-gray-300 bg-gray-500/10'
+                                                            }`}>{event.type}</span>
+                                                        <span>• {event.time}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right shrink-0">
+                                                    <span className="block text-emerald-400 font-bold text-lg">{event.precio} <span className="text-xs font-normal text-white/50">Bs</span></span>
                                                 </div>
                                             </div>
-                                            <div className="text-right shrink-0">
-                                                <span className="block text-emerald-400 font-bold text-lg">{event.precio} <span className="text-xs font-normal text-white/50">Bs</span></span>
-                                            </div>
                                         </div>
-                                    </div>
-                                ))
-                            )}
+                                    ))
+                                )}
 
-                            <button
-                                onClick={() => {
-                                    // Pre-fill date for new event
-                                    setNewEventDate(selectedDate);
-                                    setSelectedDate(null);
-                                    setIsModalOpen(true);
-                                }}
-                                className="w-full py-4 mt-2 rounded-xl bg-white/5 border border-white/10 text-purple-400 font-bold hover:bg-white/10 flex items-center justify-center gap-2 transition-all active:scale-95"
-                            >
-                                <span className="material-symbols-outlined">add_circle</span>
-                                Agregar Evento este Día
-                            </button>
+                                <button
+                                    onClick={() => {
+                                        // Pre-fill date for new event
+                                        setNewEventDate(selectedDate);
+                                        setSelectedDate(null);
+                                        setIsModalOpen(true);
+                                    }}
+                                    className="w-full py-4 mt-2 rounded-xl bg-white/5 border border-white/10 text-purple-400 font-bold hover:bg-white/10 flex items-center justify-center gap-2 transition-all active:scale-95"
+                                >
+                                    <span className="material-symbols-outlined">add_circle</span>
+                                    Agregar Evento este Día
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                </div>,
-                document.body
-            )}
-        </div>
+                    </div>,
+                    document.body
+                )
+            }
+        </div >
     );
 }

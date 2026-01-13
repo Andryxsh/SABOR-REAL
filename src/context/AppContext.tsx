@@ -40,6 +40,7 @@ export interface Musician {
         ensayo?: number;
         privado_3h?: number; // New Type
         viaje_3h?: number;   // New Type
+        chofer_extra?: number; // Tarifa reducida para 2do evento en ciudad (Choferes)
     };
     formaPago?: 'efectivo' | 'transferencia';
     cuentaBancaria?: string;
