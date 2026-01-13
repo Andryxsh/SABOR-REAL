@@ -427,7 +427,10 @@ export default function Events() {
                             const eventsOnDay = getEventsForDate(dateStr);
                             const hasEvents = eventsOnDay.length > 0;
                             const isSelected = selectedDate === dateStr;
-                            const isToday = dateStr === new Date().toISOString().split('T')[0];
+                            // Fix: Use local time instead of UTC to avoid timezone issues
+                            const today = new Date();
+                            const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+                            const isToday = dateStr === todayStr;
 
                             return (
                                 <button
