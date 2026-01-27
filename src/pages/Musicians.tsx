@@ -42,6 +42,7 @@ export default function Musicians() {
     const [newMemberTarifaEnsayo, setNewMemberTarifaEnsayo] = useState('');
     const [newMemberTarifaPrivado3h, setNewMemberTarifaPrivado3h] = useState(''); // New State
     const [newMemberTarifaViaje3h, setNewMemberTarifaViaje3h] = useState('');     // New State
+    const [newMemberTarifaViajeDiscoteca, setNewMemberTarifaViajeDiscoteca] = useState(''); // New State
     const [newMemberChoferExtra, setNewMemberChoferExtra] = useState(''); // New State
     const [newMemberFormaPago, setNewMemberFormaPago] = useState<'efectivo' | 'transferencia'>('efectivo');
     const [newMemberCuentaBancaria, setNewMemberCuentaBancaria] = useState('');
@@ -81,6 +82,7 @@ export default function Musicians() {
             if (newMemberTarifaEnsayo) newMusician.tarifas.ensayo = parseFloat(newMemberTarifaEnsayo);
             if (newMemberTarifaPrivado3h) newMusician.tarifas.privado_3h = parseFloat(newMemberTarifaPrivado3h); // New Logic
             if (newMemberTarifaViaje3h) newMusician.tarifas.viaje_3h = parseFloat(newMemberTarifaViaje3h);       // New Logic
+            if (newMemberTarifaViajeDiscoteca) newMusician.tarifas.viaje_discoteca = parseFloat(newMemberTarifaViajeDiscoteca); // New Logic
             if (newMemberChoferExtra) newMusician.tarifas.chofer_extra = parseFloat(newMemberChoferExtra);       // New Logic
 
             await addMusician(newMusician);
@@ -103,6 +105,7 @@ export default function Musicians() {
             setNewMemberTarifaEnsayo('');
             setNewMemberTarifaPrivado3h(''); // Reset
             setNewMemberTarifaViaje3h('');   // Reset
+            setNewMemberTarifaViajeDiscoteca(''); // Reset
             setNewMemberChoferExtra('');     // Reset
             setNewMemberFormaPago('efectivo');
             setNewMemberCuentaBancaria('');
@@ -614,6 +617,16 @@ export default function Musicians() {
                                             placeholder="0.00"
                                         />
                                     </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-medium text-gray-400 ml-1">Viaje (Discoteca)</label>
+                                        <input
+                                            type="number"
+                                            value={newMemberTarifaViajeDiscoteca}
+                                            onChange={(e) => setNewMemberTarifaViajeDiscoteca(e.target.value)}
+                                            className="w-full px-4 py-3 bg-white/5 border border-emerald-500/20 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all font-medium text-right"
+                                            placeholder="0.00"
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -713,6 +726,11 @@ export default function Musicians() {
                                     <div className="space-y-1.5">
                                         <label className="text-xs font-medium text-gray-400 ml-1">Viaje (3 Horas)</label>
                                         <input type="number" value={editMember.tarifas.viaje_3h || 0} onChange={(e) => setEditMember({ ...editMember, tarifas: { ...editMember.tarifas, viaje_3h: parseFloat(e.target.value) || 0 } })}
+                                            className="w-full px-4 py-3 bg-white/5 border border-emerald-500/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 text-right" />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-medium text-gray-400 ml-1">Viaje (Discoteca)</label>
+                                        <input type="number" value={editMember.tarifas.viaje_discoteca || 0} onChange={(e) => setEditMember({ ...editMember, tarifas: { ...editMember.tarifas, viaje_discoteca: parseFloat(e.target.value) || 0 } })}
                                             className="w-full px-4 py-3 bg-white/5 border border-emerald-500/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 text-right" />
                                     </div>
                                     <div className="space-y-1.5">

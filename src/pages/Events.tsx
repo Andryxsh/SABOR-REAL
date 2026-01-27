@@ -130,7 +130,7 @@ export default function Events() {
                     // LÓGICA ESPECIAL PARA CHOFERES
                     if (musician.category === 'chofer') {
                         // CASO 1: VIAJE (Prioridad Manual o Tarifa)
-                        if (newEventType === 'viaje' || newEventType === 'viaje_3h') {
+                        if (newEventType === 'viaje' || newEventType === 'viaje_3h' || newEventType === 'viaje_discoteca') {
                             if (driverTravelRate) {
                                 monto = parseFloat(driverTravelRate); // Override manual
                             }
@@ -242,6 +242,7 @@ export default function Events() {
         ensayo: 'https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?auto=format&fit=crop&q=80&w=800',    // Studio
         privado_3h: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&q=80&w=800', // Reusing Privado
         viaje_3h: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&q=80&w=800',   // Reusing Viaje
+        viaje_discoteca: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&q=80&w=800', // Reusing Discoteca
     };
 
     const defaultImage = 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&q=80&w=800'; // Generic Crowd
@@ -362,7 +363,8 @@ export default function Events() {
                                                         event.type === 'viaje' ? 'bg-green-500/10 border-green-500/30 text-green-300' :
                                                             event.type === 'privado_3h' ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-300' :
                                                                 event.type === 'viaje_3h' ? 'bg-teal-500/10 border-teal-500/30 text-teal-300' :
-                                                                    'bg-gray-500/10 border-gray-500/30 text-gray-300'
+                                                                    event.type === 'viaje_discoteca' ? 'bg-orange-500/10 border-orange-500/30 text-orange-300' :
+                                                                        'bg-gray-500/10 border-gray-500/30 text-gray-300'
                                                     }`}>
                                                     {event.type}
                                                 </span>
@@ -482,7 +484,8 @@ export default function Events() {
                                                     e.type === 'privado' ? 'bg-blue-400' :
                                                         e.type === 'viaje' ? 'bg-green-400' :
                                                             e.type === 'privado_3h' ? 'bg-indigo-400' :
-                                                                e.type === 'viaje_3h' ? 'bg-teal-400' : 'bg-gray-400'}`}
+                                                                e.type === 'viaje_3h' ? 'bg-teal-400' :
+                                                                    e.type === 'viaje_discoteca' ? 'bg-orange-400' : 'bg-gray-400'}`}
                                             />
                                         ))}
                                         {eventsOnDay.length > 3 && <div className="size-1.5 rounded-full bg-white/50" />}
@@ -539,6 +542,7 @@ export default function Events() {
                                             <option value="privado_3h" className="bg-gray-900 text-white">Privado (3 Horas)</option>
                                             <option value="viaje" className="bg-gray-900 text-white">Viaje</option>
                                             <option value="viaje_3h" className="bg-gray-900 text-white">Viaje (3 Horas)</option>
+                                            <option value="viaje_discoteca" className="bg-gray-900 text-white">Viaje (Discoteca)</option>
                                             <option value="ensayo" className="bg-gray-900 text-white">Ensayo</option>
                                         </select>
                                     </div>
@@ -649,7 +653,7 @@ export default function Events() {
                                     </div>
 
                                     {/* Input especial para Choferes en Viajes */}
-                                    {(newEventType === 'viaje' || newEventType === 'viaje_3h') && (
+                                    {(newEventType === 'viaje' || newEventType === 'viaje_3h' || newEventType === 'viaje_discoteca') && (
                                         <div className="mt-4 animate-fade-in">
                                             <label className="block text-blue-400 text-xs font-bold mb-1.5 ml-1 flex items-center gap-1">
                                                 <span className="material-symbols-outlined text-[14px]">local_shipping</span>

@@ -260,7 +260,8 @@ export default function EventDetail() {
                                 <span className={`px-3 py-1 rounded-full text-sm font-bold ${event.type === 'discoteca' ? 'bg-purple-500/20 text-purple-400' :
                                     event.type === 'privado' ? 'bg-blue-500/20 text-blue-400' :
                                         event.type === 'viaje' ? 'bg-green-500/20 text-green-400' :
-                                            'bg-gray-500/20 text-gray-400'
+                                            event.type === 'viaje_discoteca' ? 'bg-orange-500/20 text-orange-400' :
+                                                'bg-gray-500/20 text-gray-400'
                                     }`}>
                                     {event.type}
                                 </span>
@@ -779,8 +780,11 @@ export default function EventDetail() {
                                             onChange={(e) => setEditType(e.target.value as Event['type'])}
                                             className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all font-medium">
                                             <option value="privado">Privado</option>
+                                            <option value="privado_3h">Privado (3 Horas)</option>
                                             <option value="discoteca">Discoteca</option>
                                             <option value="viaje">Viaje</option>
+                                            <option value="viaje_3h">Viaje (3 Horas)</option>
+                                            <option value="viaje_discoteca">Viaje (Discoteca)</option>
                                         </select>
                                     </div>
                                     <div className="space-y-1.5">

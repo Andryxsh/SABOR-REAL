@@ -40,6 +40,7 @@ export interface Musician {
         ensayo?: number;
         privado_3h?: number; // New Type
         viaje_3h?: number;   // New Type
+        viaje_discoteca?: number; // New Type
         chofer_extra?: number; // Tarifa reducida para 2do evento en ciudad (Choferes)
     };
     formaPago?: 'efectivo' | 'transferencia';
@@ -65,7 +66,7 @@ export interface Event {
 
     // Básico
     title: string;
-    type: 'discoteca' | 'privado' | 'viaje' | 'ensayo' | 'privado_3h' | 'viaje_3h';
+    type: 'discoteca' | 'privado' | 'viaje' | 'ensayo' | 'privado_3h' | 'viaje_3h' | 'viaje_discoteca';
     date: string;
     time: string;
     location: string;
