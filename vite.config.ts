@@ -1,6 +1,9 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+// === CONFIGURACIÓN V2 (NUEVO) ===
+import path from 'path'
+// === FIN CONFIGURACIÓN V2 ===
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -29,4 +32,11 @@ export default defineConfig({
       }
     })
   ],
+  // === CONFIGURACIÓN V2 (NUEVO) ===
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
+  // === FIN CONFIGURACIÓN V2 ===
 })
